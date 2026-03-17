@@ -1235,8 +1235,8 @@ class Finestra:
                 if cloud:
                     self.schermo.blit(cloud, (cx, cy))
 
-        else:
-            pygame.draw.rect(self.schermo, (140, 210, 255), pygame.Rect(0, BAR, W, H - BAR))
+            else:
+                pygame.draw.rect(self.schermo, (140, 210, 255), pygame.Rect(0, BAR, W, H - BAR))
 
             # Sole nel tema chiaro: stessa posizione della luna nel tema scuro
             sun = self._carica_stile_cached("sun.png", 110, 110)
