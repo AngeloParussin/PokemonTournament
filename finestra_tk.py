@@ -261,14 +261,6 @@ class Finestra:
         self.font_grande    = pygame.font.SysFont(font_pixel, 40)
 
         fs = font_pixel if sys.platform=="win32" else ("monaco" if sys.platform=="darwin" else font_pixel)
-        self.font_piccolo   = pygame.font.SysFont("consolas", 13, bold=True)
-        self.font_normale   = pygame.font.SysFont("consolas", 15, bold=True)
-        self.font_log       = pygame.font.SysFont("consolas", 16, bold=True)
-        self.font_nome      = pygame.font.SysFont("consolas", 18, bold=True)
-        self.font_grassetto = pygame.font.SysFont("consolas", 20, bold=True)
-        self.font_titolo    = pygame.font.SysFont("consolas", 28, bold=True)
-        self.font_grande    = pygame.font.SysFont("consolas", 38, bold=True)
-        fs = "consolas" if sys.platform=="win32" else ("monaco" if sys.platform=="darwin" else "dejavusansmono")
         self.font_simboli_s  = pygame.font.SysFont(fs, 15)
         self.font_simboli_m  = pygame.font.SysFont(fs, 20)
         self.font_simboli_b  = pygame.font.SysFont(fs, 28)
@@ -1192,7 +1184,7 @@ class Finestra:
                 bright = rng.randint(160, 255)
                 pygame.draw.circle(self.schermo, (bright, bright, bright), (sx, sy), sr)
 
-            # Moon.png in alto a destra
+            # Moon.png in alto a destra (nessuna nuvola in tema notte)
             moon = self._carica_stile_cached("moon.png", 110, 110)
             if moon:
                 self.schermo.blit(moon, (W - 270, BAR + 20))
@@ -1237,6 +1229,28 @@ class Finestra:
 
             else:
                 pygame.draw.rect(self.schermo, (140, 210, 255), pygame.Rect(0, BAR, W, H - BAR))
+
+            # Sole nel tema chiaro: stessa posizione della luna nel tema scuro
+            sun = self._carica_stile_cached("sun.png", 110, 110)
+            if sun:
+                self.schermo.blit(sun, (W - 270, BAR + 20))
+
+            # Nuvole solo nel tema giorno, sparse in tutto lo schermo
+            pos_nuvole = [
+                # (x, y, larghezza) — mix di nuvole grandi/medie/piccole nel solo tema giorno
+                (30,  BAR + 22,  150), (250, BAR + 95,  95), (430, BAR + 34,  135),
+                (640, BAR + 150, 85),  (835, BAR + 58,  145), (1040, BAR + 120, 100),
+                (85,  BAR + 245, 120), (300, BAR + 375, 90),  (560, BAR + 300, 160),
+                (860, BAR + 430, 110), (1045, BAR + 545, 80),
+            ]
+            for i, (cx, cy, larghezza) in enumerate(pos_nuvole, start=1):
+                nome_cloud = f"cloud{((i - 1) % 11) + 1}.png"
+                cloud = self._carica_stile_cached_proporzionale(nome_cloud, larghezza)
+                if cloud:
+                    self.schermo.blit(cloud, (cx, cy))
+
+        if self.tema == "chiaro":
+            pygame.draw.rect(self.schermo, (140, 210, 255), pygame.Rect(0, BAR, W, H - BAR))
 
             # Sole nel tema chiaro: stessa posizione della luna nel tema scuro
             sun = self._carica_stile_cached("sun.png", 110, 110)
