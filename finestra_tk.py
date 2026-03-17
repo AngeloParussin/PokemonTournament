@@ -1216,9 +1216,9 @@ class Finestra:
             if sun:
                 self.schermo.blit(sun, (W - 270, BAR + 20))
 
-        else:
+            else:
             # Sole nel tema chiaro: stessa posizione della luna nel tema scuro
-            sun = self._carica_stile_cached("sun.png", 110, 110)
+                sun = self._carica_stile_cached("sun.png", 110, 110)
             if sun:
                 self.schermo.blit(sun, (W - 270, BAR + 20))
 
