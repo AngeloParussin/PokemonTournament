@@ -261,6 +261,14 @@ class Finestra:
         self.font_grande    = pygame.font.SysFont(font_pixel, 40)
 
         fs = font_pixel if sys.platform=="win32" else ("monaco" if sys.platform=="darwin" else font_pixel)
+        self.font_piccolo   = pygame.font.SysFont("consolas", 13, bold=True)
+        self.font_normale   = pygame.font.SysFont("consolas", 15, bold=True)
+        self.font_log       = pygame.font.SysFont("consolas", 16, bold=True)
+        self.font_nome      = pygame.font.SysFont("consolas", 18, bold=True)
+        self.font_grassetto = pygame.font.SysFont("consolas", 20, bold=True)
+        self.font_titolo    = pygame.font.SysFont("consolas", 28, bold=True)
+        self.font_grande    = pygame.font.SysFont("consolas", 38, bold=True)
+        fs = "consolas" if sys.platform=="win32" else ("monaco" if sys.platform=="darwin" else "dejavusansmono")
         self.font_simboli_s  = pygame.font.SysFont(fs, 15)
         self.font_simboli_m  = pygame.font.SysFont(fs, 20)
         self.font_simboli_b  = pygame.font.SysFont(fs, 28)
@@ -1191,6 +1199,22 @@ class Finestra:
             else:
                 pygame.draw.circle(self.schermo, (220, 220, 180), (W - 145, BAR + 75), 55)
                 pygame.draw.circle(self.schermo, col(BG), (W - 125, BAR + 60), 42)
+            # Nuvole pixel sparse nel cielo notturno
+            pos_nuvole = [
+                (95, BAR + 35), (260, BAR + 95), (430, BAR + 50), (620, BAR + 110),
+                (785, BAR + 70), (960, BAR + 45), (1120, BAR + 100), (180, BAR + 180),
+                (520, BAR + 190), (840, BAR + 175), (1080, BAR + 210),
+            ]
+            for i, (cx, cy) in enumerate(pos_nuvole, start=1):
+                cloud = self._carica_stile_cached(f"cloud{i}.png", 72, 44)
+                if cloud:
+                    self.schermo.blit(cloud, (cx, cy))
+
+        else:
+            # Sole nel tema chiaro: stessa posizione della luna nel tema scuro
+            sun = self._carica_stile_cached("sun.png", 110, 110)
+            if sun:
+                self.schermo.blit(sun, (W - 270, BAR + 20))
 
         else:
             # Sole nel tema chiaro: stessa posizione della luna nel tema scuro
