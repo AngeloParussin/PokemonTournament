@@ -1235,6 +1235,28 @@ class Finestra:
                 if cloud:
                     self.schermo.blit(cloud, (cx, cy))
 
+        else:
+            pygame.draw.rect(self.schermo, (140, 210, 255), pygame.Rect(0, BAR, W, H - BAR))
+
+            # Sole nel tema chiaro: stessa posizione della luna nel tema scuro
+            sun = self._carica_stile_cached("sun.png", 110, 110)
+            if sun:
+                self.schermo.blit(sun, (W - 270, BAR + 20))
+
+            # Nuvole solo nel tema giorno, sparse in tutto lo schermo
+            pos_nuvole = [
+                # (x, y, larghezza) — mix di nuvole grandi/medie/piccole nel solo tema giorno
+                (30,  BAR + 22,  150), (250, BAR + 95,  95), (430, BAR + 34,  135),
+                (640, BAR + 150, 85),  (835, BAR + 58,  145), (1040, BAR + 120, 100),
+                (85,  BAR + 245, 120), (300, BAR + 375, 90),  (560, BAR + 300, 160),
+                (860, BAR + 430, 110), (1045, BAR + 545, 80),
+            ]
+            for i, (cx, cy, larghezza) in enumerate(pos_nuvole, start=1):
+                nome_cloud = f"cloud{((i - 1) % 11) + 1}.png"
+                cloud = self._carica_stile_cached_proporzionale(nome_cloud, larghezza)
+                if cloud:
+                    self.schermo.blit(cloud, (cx, cy))
+
         ys = [170,320,460,590,700]
         psx = [(65,ys[0]),(215,ys[1]),(60,ys[2]),(210,ys[3]),(70,ys[4])]
         pdx = [(W-65,ys[0]),(W-215,ys[1]),(W-60,ys[2]),(W-210,ys[3]),(W-70,ys[4])]
