@@ -244,6 +244,23 @@ class Finestra:
         pygame.quit()
 
     def _crea_font(self):
+        nomi_font = set(pygame.font.get_fonts())
+        preferiti_pixel = [
+            "pressstart2p", "silkscreen", "pixeloidsans", "pixeloidsansbold",
+            "vt323", "minecraftia", "04b03", "fixedsys", "terminus", "unifont",
+            "dejavusansmono", "consolas",
+        ]
+        font_pixel = next((f for f in preferiti_pixel if f in nomi_font), "dejavusansmono")
+
+        self.font_piccolo   = pygame.font.SysFont(font_pixel, 14)
+        self.font_normale   = pygame.font.SysFont(font_pixel, 16)
+        self.font_log       = pygame.font.SysFont(font_pixel, 17)
+        self.font_nome      = pygame.font.SysFont(font_pixel, 18)
+        self.font_grassetto = pygame.font.SysFont(font_pixel, 21)
+        self.font_titolo    = pygame.font.SysFont(font_pixel, 30)
+        self.font_grande    = pygame.font.SysFont(font_pixel, 40)
+
+        fs = font_pixel if sys.platform=="win32" else ("monaco" if sys.platform=="darwin" else font_pixel)
         self.font_piccolo   = pygame.font.SysFont("consolas", 13, bold=True)
         self.font_normale   = pygame.font.SysFont("consolas", 15, bold=True)
         self.font_log       = pygame.font.SysFont("consolas", 16, bold=True)
@@ -253,9 +270,9 @@ class Finestra:
         self.font_grande    = pygame.font.SysFont("consolas", 38, bold=True)
         fs = "consolas" if sys.platform=="win32" else ("monaco" if sys.platform=="darwin" else "dejavusansmono")
         self.font_simboli_s  = pygame.font.SysFont(fs, 15)
-        self.font_simboli_m  = pygame.font.SysFont(fs, 20, bold=True)
-        self.font_simboli_b  = pygame.font.SysFont(fs, 28, bold=True)
-        self.font_simboli_xl = pygame.font.SysFont(fs, 38, bold=True)
+        self.font_simboli_m  = pygame.font.SysFont(fs, 20)
+        self.font_simboli_b  = pygame.font.SysFont(fs, 28)
+        self.font_simboli_xl = pygame.font.SysFont(fs, 38)
 
     def _applica_tema(self, nome_tema):
         global BG, BG2, BG3, ACCENT, ACCENT2, OK, WARN, ERR, TXT, TXT2, BORDER, GOLD
@@ -437,6 +454,25 @@ class Finestra:
         if chiave not in self.cache_stile:
             self.cache_stile[chiave] = self._carica_immagine_stile(nome_file, larghezza, altezza)
         return self.cache_stile[chiave]
+
+    def _carica_stile_cached_proporzionale(self, nome_file, larghezza):
+        # Ridimensiona mantenendo il rapporto originale dell'immagine
+        cartella = os.path.join(self.cartella_dati, "style")
+        percorso = os.path.join(cartella, nome_file)
+        if not os.path.isfile(percorso):
+            return None
+        try:
+            from PIL import Image
+            iw, ih = Image.open(percorso).size
+        except Exception:
+            try:
+                iw, ih = pygame.image.load(percorso).get_size()
+            except Exception:
+                return None
+        if iw <= 0 or ih <= 0:
+            return None
+        altezza = max(1, int(larghezza * ih / iw))
+        return self._carica_stile_cached(nome_file, larghezza, altezza)
 
     def _carica_wallpaper(self):
         area_arena = (W, H - LOW - BAR)
@@ -1179,6 +1215,25 @@ class Finestra:
             sun = self._carica_stile_cached("sun.png", 110, 110)
             if sun:
                 self.schermo.blit(sun, (W - 270, BAR + 20))
+
+        else:
+            # Sole nel tema chiaro: stessa posizione della luna nel tema scuro
+            sun = self._carica_stile_cached("sun.png", 110, 110)
+            if sun:
+                self.schermo.blit(sun, (W - 270, BAR + 20))
+
+            # Nuvole solo nel tema giorno, sparse in tutto lo schermo
+            pos_nuvole = [
+                (40, BAR + 28, 120), (245, BAR + 110, 95), (490, BAR + 48, 105),
+                (690, BAR + 185, 88), (930, BAR + 72, 112), (1090, BAR + 150, 90),
+                (120, BAR + 275, 110), (360, BAR + 330, 98), (740, BAR + 410, 118),
+                (980, BAR + 300, 100), (1040, BAR + 500, 92),
+            ]
+            for i, (cx, cy, larghezza) in enumerate(pos_nuvole, start=1):
+                nome_cloud = f"cloud{((i - 1) % 11) + 1}.png"
+                cloud = self._carica_stile_cached_proporzionale(nome_cloud, larghezza)
+                if cloud:
+                    self.schermo.blit(cloud, (cx, cy))
 
         ys = [170,320,460,590,700]
         psx = [(65,ys[0]),(215,ys[1]),(60,ys[2]),(210,ys[3]),(70,ys[4])]
