@@ -244,14 +244,14 @@ class Finestra:
         pygame.quit()
 
     def _crea_font(self):
-        self.font_piccolo   = pygame.font.SysFont("consolas", 13)
-        self.font_normale   = pygame.font.SysFont("consolas", 15)
-        self.font_log       = pygame.font.SysFont("consolas", 16)
-        self.font_nome      = pygame.font.SysFont("segoeui", 18)
-        self.font_grassetto = pygame.font.SysFont("segoeui", 20, bold=True)
-        self.font_titolo    = pygame.font.SysFont("segoeui", 28, bold=True)
-        self.font_grande    = pygame.font.SysFont("segoeui", 38, bold=True)
-        fs = "segoeuisymbol" if sys.platform=="win32" else ("applesymbols" if sys.platform=="darwin" else "dejavusans")
+        self.font_piccolo   = pygame.font.SysFont("consolas", 13, bold=True)
+        self.font_normale   = pygame.font.SysFont("consolas", 15, bold=True)
+        self.font_log       = pygame.font.SysFont("consolas", 16, bold=True)
+        self.font_nome      = pygame.font.SysFont("consolas", 18, bold=True)
+        self.font_grassetto = pygame.font.SysFont("consolas", 20, bold=True)
+        self.font_titolo    = pygame.font.SysFont("consolas", 28, bold=True)
+        self.font_grande    = pygame.font.SysFont("consolas", 38, bold=True)
+        fs = "consolas" if sys.platform=="win32" else ("monaco" if sys.platform=="darwin" else "dejavusansmono")
         self.font_simboli_s  = pygame.font.SysFont(fs, 15)
         self.font_simboli_m  = pygame.font.SysFont(fs, 20, bold=True)
         self.font_simboli_b  = pygame.font.SysFont(fs, 28, bold=True)
@@ -304,15 +304,15 @@ class Finestra:
         pygame.draw.line(self.schermo, (100, 120, 150), (metà, 0), (metà, H), 2)
 
         # Titolo
-        tit = self.font_grande.render("SCEGLI IL TEMA", True, (255, 255, 255))
+        tit = self.font_grande.render("SCEGLI IL TEMA", False, (255, 255, 255))
         self.schermo.blit(tit, (metà - tit.get_width()//2, 80))
 
         rettangoli = self._rett_tema()
 
         # --- Bottone SCURO ---
         x1, y1, x2, y2 = rettangoli[0]
-        pygame.draw.rect(self.schermo, (17, 24, 39),   pygame.Rect(x1, y1, x2-x1, y2-y1), 0, 18)
-        pygame.draw.rect(self.schermo, (0, 229, 255),  pygame.Rect(x1, y1, x2-x1, y2-y1), 3, 18)
+        pygame.draw.rect(self.schermo, (17, 24, 39),   pygame.Rect(x1, y1, x2-x1, y2-y1))
+        pygame.draw.rect(self.schermo, (0, 229, 255),  pygame.Rect(x1, y1, x2-x1, y2-y1), 3)
         # Icona luna
         self.schermo.blit(
             self.font_simboli_xl.render("🌙", True, (0, 229, 255)),
@@ -325,8 +325,8 @@ class Finestra:
 
         # --- Bottone CHIARO ---
         x1, y1, x2, y2 = rettangoli[1]
-        pygame.draw.rect(self.schermo, (226, 232, 240), pygame.Rect(x1, y1, x2-x1, y2-y1), 0, 18)
-        pygame.draw.rect(self.schermo, (2, 132, 199),   pygame.Rect(x1, y1, x2-x1, y2-y1), 3, 18)
+        pygame.draw.rect(self.schermo, (226, 232, 240), pygame.Rect(x1, y1, x2-x1, y2-y1))
+        pygame.draw.rect(self.schermo, (2, 132, 199),   pygame.Rect(x1, y1, x2-x1, y2-y1), 3)
         # Icona sole
         self.schermo.blit(
             self.font_simboli_xl.render("☀", True, (180, 69, 0)),
@@ -338,20 +338,8 @@ class Finestra:
         self.schermo.blit(descr, (x1 + (x2-x1)//2 - descr.get_width()//2, y1 + 148))
 
         # Suggerimento in basso
-        hint = self.font_piccolo.render("Clicca per scegliere", True, (120, 130, 150))
+        hint = self.font_piccolo.render("Clicca per scegliere", False, (120, 130, 150))
         self.schermo.blit(hint, (metà - hint.get_width()//2, H - 50))
-        self.font_piccolo   = pygame.font.SysFont("consolas", 13)
-        self.font_normale   = pygame.font.SysFont("consolas", 15)
-        self.font_log       = pygame.font.SysFont("consolas", 16)
-        self.font_nome      = pygame.font.SysFont("segoeui", 18)
-        self.font_grassetto = pygame.font.SysFont("segoeui", 20, bold=True)
-        self.font_titolo    = pygame.font.SysFont("segoeui", 28, bold=True)
-        self.font_grande    = pygame.font.SysFont("segoeui", 38, bold=True)
-        fs = "segoeuisymbol" if sys.platform=="win32" else ("applesymbols" if sys.platform=="darwin" else "dejavusans")
-        self.font_simboli_s  = pygame.font.SysFont(fs, 15)
-        self.font_simboli_m  = pygame.font.SysFont(fs, 20, bold=True)
-        self.font_simboli_b  = pygame.font.SysFont(fs, 28, bold=True)
-        self.font_simboli_xl = pygame.font.SysFont(fs, 38, bold=True)
 
     # -----------------------------------------------------------
     # DISEGNO PRINCIPALE
@@ -373,7 +361,7 @@ class Finestra:
     # -----------------------------------------------------------
 
     def _txt(self, x, y, testo, font, colore, ancora="nw"):
-        img = font.render(str(testo), True, colore)
+        img = font.render(str(testo), False, colore)
         w, h = img.get_width(), img.get_height()
         if   ancora == "nw":     px, py = x,       y
         elif ancora == "w":      px, py = x,       y - h//2
@@ -393,10 +381,9 @@ class Finestra:
         if bordo:  pygame.draw.rect(self.schermo, col(bordo), r, sp)
 
     def _rett_r(self, x1, y1, x2, y2, raggio=12, sfondo=None, bordo=None, sp=1):
-        raggio = min(raggio, (x2-x1)//2, (y2-y1)//2)
         r = pygame.Rect(x1, y1, x2-x1, y2-y1)
-        if sfondo: pygame.draw.rect(self.schermo, col(sfondo), r, 0, border_radius=raggio)
-        if bordo:  pygame.draw.rect(self.schermo, col(bordo),  r, sp, border_radius=raggio)
+        if sfondo: pygame.draw.rect(self.schermo, col(sfondo), r)
+        if bordo:  pygame.draw.rect(self.schermo, col(bordo),  r, sp)
 
     def _linea(self, x1, y1, x2, y2, colore, sp=1):
         pygame.draw.line(self.schermo, col(colore), (x1,y1), (x2,y2), sp)
@@ -408,13 +395,13 @@ class Finestra:
     def _barra(self, x, y, lw, lh, valore, massimo, c_fill):
         raggio = max(2, lh//2)
         r = pygame.Rect(x, y, lw, lh)
-        pygame.draw.rect(self.schermo, col(BG3),   r, 0, border_radius=raggio)
-        pygame.draw.rect(self.schermo, col(BORDER), r, 1, border_radius=raggio)
+        pygame.draw.rect(self.schermo, col(BG3),   r)
+        pygame.draw.rect(self.schermo, col(BORDER), r, 1)
         if massimo > 0 and valore > 0:
             pieni = max(0, int(lw * min(valore, massimo) / massimo))
             if pieni > 0:
                 pygame.draw.rect(self.schermo, col(c_fill),
-                                 pygame.Rect(x, y, pieni, lh), 0, border_radius=raggio)
+                                 pygame.Rect(x, y, pieni, lh))
 
     def _overlay(self):
         s = pygame.Surface((W, H), pygame.SRCALPHA)
@@ -1113,7 +1100,6 @@ class Finestra:
     def _disegna_toggle(self):
         x1, y1, x2, y2 = self._rett_toggle()
         lw = x2 - x1; lh = y2 - y1
-        raggio = lh // 2
         e_scuro = (self.tema == "scuro")
 
         # Sfondo del toggle
@@ -1122,7 +1108,7 @@ class Finestra:
         else:
             sfondo_c = (100, 180, 240) # giorno: azzurro cielo
 
-        pygame.draw.rect(self.schermo, sfondo_c, pygame.Rect(x1, y1, lw, lh), 0, border_radius=raggio)
+        pygame.draw.rect(self.schermo, sfondo_c, pygame.Rect(x1, y1, lw, lh))
 
         # Dettagli di sfondo
         if e_scuro:
@@ -1135,28 +1121,21 @@ class Finestra:
                 pygame.draw.circle(self.schermo, (255,255,255), (cx_,cy_), cr)
 
         # Thumb: notte → luna a DESTRA, giorno → sole a SINISTRA
-        thumb_r = raggio - 5
+        thumb_l = lh - 10
         if e_scuro:
-            tx = x2 - raggio   # destra = notte/luna
-            # Luna grigia con crateri
-            pygame.draw.circle(self.schermo, (210,210,210), (tx, y1+lh//2), thumb_r)
-            pygame.draw.circle(self.schermo, (170,170,170), (tx+6, y1+lh//2-6), 5)
-            pygame.draw.circle(self.schermo, (170,170,170), (tx-4, y1+lh//2+5), 3)
+            tx = x2 - lh + 5   # destra = notte/luna
+            pygame.draw.rect(self.schermo, (210,210,210), pygame.Rect(tx, y1+5, thumb_l, thumb_l))
+            pygame.draw.rect(self.schermo, (170,170,170), pygame.Rect(tx+8, y1+13, 8, 8))
+            pygame.draw.rect(self.schermo, (170,170,170), pygame.Rect(tx+18, y1+28, 6, 6))
         else:
-            tx = x1 + raggio   # sinistra = giorno/sole
-            # Sole giallo
-            pygame.draw.circle(self.schermo, (255,210,50), (tx, y1+lh//2), thumb_r)
-            for ang in range(0, 360, 45):
-                rad = math.radians(ang)
-                rx1 = tx + int(math.cos(rad) * (thumb_r+3))
-                ry1 = y1+lh//2 + int(math.sin(rad) * (thumb_r+3))
-                rx2 = tx + int(math.cos(rad) * (thumb_r+8))
-                ry2 = y1+lh//2 + int(math.sin(rad) * (thumb_r+8))
-                pygame.draw.line(self.schermo, (255,190,20), (rx1,ry1), (rx2,ry2), 2)
+            tx = x1 + 5   # sinistra = giorno/sole
+            pygame.draw.rect(self.schermo, (255,210,50), pygame.Rect(tx, y1+5, thumb_l, thumb_l))
+            pygame.draw.rect(self.schermo, (255,190,20), pygame.Rect(tx+16, y1+1, 8, 4))
+            pygame.draw.rect(self.schermo, (255,190,20), pygame.Rect(tx+16, y1+lh-5, 8, 4))
 
         # Bordo
         bordo_c = (50,70,120) if e_scuro else (50,130,190)
-        pygame.draw.rect(self.schermo, bordo_c, pygame.Rect(x1,y1,lw,lh), 2, border_radius=raggio)
+        pygame.draw.rect(self.schermo, bordo_c, pygame.Rect(x1,y1,lw,lh), 2)
 
         # Etichetta sotto
         label = "NOTTE" if e_scuro else "GIORNO"
@@ -1164,6 +1143,9 @@ class Finestra:
 
     def _disegna_difficolta(self):
         # Elementi ambientali in base al tema
+        if self.tema == "chiaro":
+            pygame.draw.rect(self.schermo, (140, 210, 255), pygame.Rect(0, BAR, W, H - BAR))
+
         if self.tema == "scuro":
             # Stelle fisse in posizioni casuali ma deterministiche (seed fisso)
             rng = random.Random(42)
@@ -1181,6 +1163,22 @@ class Finestra:
             else:
                 pygame.draw.circle(self.schermo, (220, 220, 180), (W - 145, BAR + 75), 55)
                 pygame.draw.circle(self.schermo, col(BG), (W - 125, BAR + 60), 42)
+            # Nuvole pixel sparse nel cielo notturno
+            pos_nuvole = [
+                (95, BAR + 35), (260, BAR + 95), (430, BAR + 50), (620, BAR + 110),
+                (785, BAR + 70), (960, BAR + 45), (1120, BAR + 100), (180, BAR + 180),
+                (520, BAR + 190), (840, BAR + 175), (1080, BAR + 210),
+            ]
+            for i, (cx, cy) in enumerate(pos_nuvole, start=1):
+                cloud = self._carica_stile_cached(f"cloud{i}.png", 72, 44)
+                if cloud:
+                    self.schermo.blit(cloud, (cx, cy))
+
+        else:
+            # Sole nel tema chiaro: stessa posizione della luna nel tema scuro
+            sun = self._carica_stile_cached("sun.png", 110, 110)
+            if sun:
+                self.schermo.blit(sun, (W - 270, BAR + 20))
 
         ys = [170,320,460,590,700]
         psx = [(65,ys[0]),(215,ys[1]),(60,ys[2]),(210,ys[3]),(70,ys[4])]
@@ -1201,7 +1199,7 @@ class Finestra:
             c = clist[i]; cy = (y1+y2)//2
             hover = (i == self.hover_difficolta)
             # Ombra pixel-art
-            pygame.draw.rect(self.schermo, (0,0,0), pygame.Rect(x1+4, y1+4, x2-x1, y2-y1), 0, 8)
+            pygame.draw.rect(self.schermo, (0,0,0), pygame.Rect(x1+4, y1+4, x2-x1, y2-y1))
             # Sfondo: si riempie col colore del bordo se hover
             sfondo_btn = c if hover else BG3
             self._rett_r(x1, y1, x2, y2, raggio=8, sfondo=sfondo_btn, bordo=c, sp=2)
@@ -1239,16 +1237,16 @@ class Finestra:
         attivo = self.selezionato_indice >= 0
         if attivo:
             # Ombra pixel-art + bottone monocolore ACCENT
-            pygame.draw.rect(self.schermo, (0,0,0), pygame.Rect(x1+3, y1+3, x2-x1, y2-y1), 0, 4)
-            pygame.draw.rect(self.schermo, col(ACCENT), pygame.Rect(x1, y1, x2-x1, y2-y1), 0, 4)
+            pygame.draw.rect(self.schermo, (0,0,0), pygame.Rect(x1+3, y1+3, x2-x1, y2-y1))
+            pygame.draw.rect(self.schermo, col(ACCENT), pygame.Rect(x1, y1, x2-x1, y2-y1))
             # Angolini neri pixel-art
             for qx, qy in [(x1,y1),(x2-4,y1),(x1,y2-4),(x2-4,y2-4)]:
                 pygame.draw.rect(self.schermo, (0,0,0), pygame.Rect(qx, qy, 4, 4))
             self._txt((x1+x2)//2+1,(y1+y2)//2+1,"INIZIA BATTAGLIA",self.font_simboli_s,(0,0,0),"center")
             self._txt((x1+x2)//2,  (y1+y2)//2,  "INIZIA BATTAGLIA",self.font_simboli_s,col(BG),"center")
         else:
-            pygame.draw.rect(self.schermo, col(BG3), pygame.Rect(x1, y1, x2-x1, y2-y1), 0, 4)
-            pygame.draw.rect(self.schermo, col(BORDER), pygame.Rect(x1, y1, x2-x1, y2-y1), 2, 4)
+            pygame.draw.rect(self.schermo, col(BG3), pygame.Rect(x1, y1, x2-x1, y2-y1))
+            pygame.draw.rect(self.schermo, col(BORDER), pygame.Rect(x1, y1, x2-x1, y2-y1), 2)
             self._txt((x1+x2)//2,(y1+y2)//2,"SCEGLI UN POKEMON",self.font_simboli_s,col(TXT2),"center")
 
         self._griglia()
@@ -1582,12 +1580,12 @@ class Finestra:
             self._txt(x, y+1, nome, self.font_piccolo, col(TXT2))
             xb = x+34; lwb = lw-80
             r_ = pygame.Rect(xb, y, lwb, 10)
-            pygame.draw.rect(self.schermo, col(self.barra_bg_colore), r_, 0, border_radius=5)
-            pygame.draw.rect(self.schermo, col(BORDER), r_, 1, border_radius=5)
+            pygame.draw.rect(self.schermo, col(self.barra_bg_colore), r_)
+            pygame.draw.rect(self.schermo, col(BORDER), r_, 1)
             if massimo > 0:
                 pieni = max(0, int(lwb * min(valore,massimo)/massimo))
                 if pieni > 0:
-                    pygame.draw.rect(self.schermo,col(cb),pygame.Rect(xb,y,pieni,10),0,border_radius=5)
+                    pygame.draw.rect(self.schermo,col(cb),pygame.Rect(xb,y,pieni,10))
             self._txt(x+lw, y+1, f"{int(valore)}/{massimo}", self.font_piccolo, col(TXT), "ne")
             y += 16
 
