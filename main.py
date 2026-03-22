@@ -35,7 +35,11 @@ def logica_gioco(finestra, tutti_i_pokemon, tabella_tipi):
             pool = random.sample(tutti_i_pokemon, min(DIMENSIONE_POOL, len(tutti_i_pokemon)))
 
             # 3. Il giocatore sceglie il suo Pokemon
-            giocatore = chiedi_pokemon(finestra, pool)
+            giocatore = chiedi_pokemon(finestra, pool, difficolta)
+            
+            # Se torna None, significa che è stato cliccato INDIETRO
+            if giocatore is None:
+                continue
 
             # 4. Scelgo i 15 avversari in base alla difficoltà
             altri = [p for p in pool if p is not giocatore]

@@ -8,7 +8,7 @@ from battaglia import combatti
 DIMENSIONE_TORNEO = 16
 
 NOMI_ROUND = {
-    16: "Round of 16",
+    16: "Ottavi di finale",
     8:  "Quarti di Finale",
     4:  "Semifinali",
     2:  "Finale",
@@ -49,11 +49,12 @@ def chiedi_difficolta(finestra, pool):
         if msg["tipo"] == "esci":       raise SystemExit
 
 
-def chiedi_pokemon(finestra, pool):
-    invia(finestra, {"tipo": "selezione", "pool": pool})
+def chiedi_pokemon(finestra, pool, difficolta=""):
+    invia(finestra, {"tipo": "selezione", "pool": pool, "difficolta": difficolta})
     while True:
         msg = finestra.coda_risposte.get()
         if msg["tipo"] == "pokemon": return msg["valore"]
+        if msg["tipo"] == "indietro": return None
         if msg["tipo"] == "esci":    raise SystemExit
 
 
@@ -152,19 +153,21 @@ def esegui_torneo(giocatore, partecipanti, tabella_tipi, difficolta, finestra=No
                 msg = f"Eliminato da {avversario['nome']}..."
 
             invia(finestra, {"tipo": "risultato", "messaggio": msg})
-            aspetta_continua(finestra)
 
-            # Tabellone aggiornato con anteprima del prossimo round
+            # Se è l'ultima battaglia (solo il giocatore rimane), passa direttamente al campione
             if len(vincitori) > 1:
+                aspetta_continua(finestra)
+
+                # Tabellone aggiornato con anteprima del prossimo round
                 prossimo_round = [
                     {"a": vincitori[i]["nome"], "b": vincitori[i+1]["nome"], "vincitore": None}
                     for i in range(0, len(vincitori), 2)
                 ]
                 bracket_da_mostrare = list(bracket) + [prossimo_round]
+                mostra_tabellone(finestra, bracket_completo_con_placeholder(bracket_da_mostrare), nome_round, msg)
             else:
-                bracket_da_mostrare = list(bracket)
-
-            mostra_tabellone(finestra, bracket_completo_con_placeholder(bracket_da_mostrare), nome_round, msg)
+                # Vittoria finale, esci dal loop e mostra campione
+                break
 
             if vincitore is not giocatore:
                 return False

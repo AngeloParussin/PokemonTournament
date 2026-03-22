@@ -2,7 +2,6 @@
 # finestra_tk.py — grafica del Pokemon Tournament con Pygame
 
 import pygame
-import sys
 import queue
 import math
 import os
@@ -12,26 +11,31 @@ import random
 # TEMI
 # ---------------------------------------------------------------
 
-BG=BG2=BG3=ACCENT=ACCENT2=OK=WARN=ERR=TXT=TXT2=BORDER=GOLD=BEA = "#000000"
-COL_HP=COL_DEF=COL_SPD=COL_ATK=COL_SPA=COL_VEL = "#000000"
+# Colori statistiche — identici in entrambi i temi
+COL_DEF = "#1565c0"
+COL_SPD = "#a855f7"
+COL_ATK = "#ff3535"
+COL_SPA = "#ff9f43"
+COL_VEL = "#e879f9"
+
+BG=BG2=BG3=ACCENT=ACCENT2=OK=WARN=ERR=TXT=TXT2=BORDER=GOLD = "#000000"
+COL_HP = "#000000"
 
 TEMA_SCURO = {
-    "BG":"#0d0015","BG2":"#150025","BG3":"#000000",
-    "ACCENT":"#c084fc","ACCENT2":"#a855f7",
+    "BG":"#000000","BG2":"#000000","BG3":"#1E1E1E",
+    "ACCENT":(255,255,255),
     "OK":"#39ff14","WARN":"#ff6b35","ERR":"#ff2d55",
-    "TXT":"#f5e8ff","TXT2":"#a78bba","BORDER":"#4a2060","GOLD":"#ffd700",
-    "COL_HP":"#39ff14","COL_DEF":"#c084fc","COL_SPD":"#a855f7",
-    "COL_ATK":"#ff6b35","COL_SPA":"#ff9f43","COL_VEL":"#e879f9",
-    "BARRA_BG":"#200035","BAR_BG":"#080010", "BEA": "#c084fc",
+    "TXT":"#ffffff","TXT2":"#a78bba","BORDER":"#A3A3A300","GOLD":"#ffd700",
+    "COL_HP":"#39ff14",
+    "BARRA_BG":"#000000","BAR_BG":"#000000",
 }
 TEMA_CHIARO = {
-    "BG":"#7ec8e3","BG2":"#a8d8f0","BG3":"#c8eafc",
-    "ACCENT":"#1565c0","ACCENT2":"#0288d1",
+    "BG":"#ffffff","BG2":"#ffffff","BG3":"#c8eafc",
+    "ACCENT":"#3D3D3D",
     "OK":"#2e7d32","WARN":"#e65100","ERR":"#c62828",
-    "TXT":"#0c1a2e","TXT2":"#1a4a7a","BORDER":"#1976d2","GOLD":"#f57f17",
-    "COL_HP":"#2e7d32","COL_DEF":"#1565c0","COL_SPD":"#0288d1",
-    "COL_ATK":"#e65100","COL_SPA":"#f57f17","COL_VEL":"#0097a7",
-    "BARRA_BG":"#90caf9","BAR_BG":"#bbdefb", "BEA": "#000000",
+    "TXT":"#0c1a2e","TXT2":"#1a4a7a","BORDER":"#000000","GOLD":"#f57f17",
+    "COL_HP":"#2e7d32",
+    "BARRA_BG":"#ffffff","BAR_BG":(183,204,209),
 }
 
 TIPO_COL = {
@@ -42,6 +46,8 @@ TIPO_COL = {
     "Steel":"#74b9ff","Fairy":"#fd79a8",
 }
 
+VIOLA_PLAYER = (168, 85, 247)
+
 # ---------------------------------------------------------------
 # DIMENSIONI
 # ---------------------------------------------------------------
@@ -50,12 +56,11 @@ W, H = 1280, 760
 BAR  = 44
 TICK = 50
 
-SPR_SEL = 36
-SPR_PAN = 72
-SPR_B   = 320
-SPR_OFF = 0.05
-SPR_CER_OFF_SEL = 0.25
-SPR_CER_OFF_PAN = 0.25
+SPR_SEL     = 36
+SPR_PAN     = 72
+SPR_B       = 320
+SPR_OFF     = 0.05
+SPR_CER_OFF = 0.25   # identico per selezione e pannello
 
 GX = 50
 GY = 80
@@ -106,8 +111,6 @@ def ctk(c):
         return "#{:02x}{:02x}{:02x}".format(c[0],c[1],c[2])
     return c
 
-converti_colore = col
-
 # ---------------------------------------------------------------
 # CLASSE FINESTRA
 # ---------------------------------------------------------------
@@ -119,23 +122,27 @@ class Finestra:
         self.cartella_dati      = cartella_dati
         self.cartella_wallpaper = ""
         self.wallpaper_corrente = None
+        self.ultimo_wallpaper   = None
         self.tema               = None
-        self.barra_bg_colore    = "#1a2235"
-        self.bar_top_colore     = "#070b14"
+        self.barra_bg_colore    = "#000000"
+        self.bar_top_colore     = "#000000"
         self.immagine_pannello  = None
+        self.immagine_bigpanel  = None
         self.cache_stile        = {}
         self.hover_difficolta   = -1
 
-        self.coda_comandi  = queue.Queue()
-        self.coda_risposte = queue.Queue()
+        self.coda_comandi       = queue.Queue()
+        self.coda_risposte      = queue.Queue()
         self.schermata_corrente = "attesa"
 
-        # Selezione pokemon
-        self.lista_pokemon      = []
-        self.hover_indice       = -1
-        self.selezionato_indice = -1
-        self.scroll_righe       = 0
-        self.sb_dragging        = False
+        # Selezione
+        self.lista_pokemon          = []
+        self.hover_indice           = -1
+        self.selezionato_indice     = -1
+        self.scroll_righe           = 0
+        self.sb_dragging            = False
+        self.difficolta_corrente    = ""
+        self.nome_pokemon_giocatore = ""
 
         # Tabellone
         self.bracket_dati   = []
@@ -171,7 +178,7 @@ class Finestra:
         self.offset_shake_x        = 0
         self.offset_shake_y        = 0
 
-        # Animazioni sfondo (nuvole/stelle nella schermata difficolta')
+        # Animazioni sfondo
         self.nuvole_anim = []
         self.stelle_anim = []
 
@@ -179,6 +186,7 @@ class Finestra:
         self.hover_mossa    = -1
         self.schermo        = None
         self.in_esecuzione  = True
+        self.is_fullscreen  = True
 
     # -----------------------------------------------------------
     # AVVIO
@@ -187,7 +195,7 @@ class Finestra:
     def avvia(self, thread_logica):
         pygame.init()
         pygame.display.set_caption("Pokemon Tournament")
-        self.schermo = pygame.display.set_mode((W, H))
+        self.schermo = pygame.display.set_mode((W, H), pygame.SRCALPHA | pygame.FULLSCREEN)
         self._crea_font()
         self._applica_tema("scuro")
         thread_logica.start()
@@ -198,6 +206,9 @@ class Finestra:
                 if evento.type == pygame.QUIT:
                     self.coda_risposte.put({"tipo": "esci"})
                     self.in_esecuzione = False
+                elif evento.type == pygame.KEYDOWN:
+                    if evento.key == pygame.K_ESCAPE:
+                        self._toggle_fullscreen()
                 elif evento.type == pygame.MOUSEMOTION:
                     self._mouse_muove(evento.pos[0], evento.pos[1])
                     if self.sb_dragging:
@@ -230,40 +241,35 @@ class Finestra:
         self.font_piccolo    = pf(r, 16)
         self.font_normale    = pf(r, 19)
         self.font_log        = pf(r, 18)
-        self.font_nome       = pf(b, 19)
         self.font_grassetto  = pf(b, 21)
         self.font_titolo     = pf(b, 28)
         self.font_grande     = pf(b, 38)
         self.font_simboli_s  = pf(r, 16)
-        self.font_simboli_m  = pf(b, 21)
         self.font_simboli_b  = pf(b, 28)
         self.font_simboli_xl = pf(b, 38)
 
     def _applica_tema(self, nome_tema):
-        global BG,BG2,BG3,ACCENT,ACCENT2,OK,WARN,ERR,TXT,TXT2,BORDER,GOLD,BEA
-        global COL_HP,COL_DEF,COL_SPD,COL_ATK,COL_SPA,COL_VEL
+        global BG,BG2,BG3,ACCENT,ACCENT2,OK,WARN,ERR,TXT,TXT2,BORDER,GOLD,COL_HP
         self.tema = nome_tema
         t = TEMA_SCURO if nome_tema == "scuro" else TEMA_CHIARO
         BG=t["BG"]; BG2=t["BG2"]; BG3=t["BG3"]
-        ACCENT=t["ACCENT"]; ACCENT2=t["ACCENT2"]
+        ACCENT=t["ACCENT"]; ACCENT2=t["ACCENT"]   # ACCENT2 identico ad ACCENT
         OK=t["OK"]; WARN=t["WARN"]; ERR=t["ERR"]
-        TXT=t["TXT"]; TXT2=t["TXT2"]; BORDER=t["BORDER"]; GOLD=t["GOLD"]; BEA=t["BEA"]
-        COL_HP=t["COL_HP"]; COL_DEF=t["COL_DEF"]; COL_SPD=t["COL_SPD"]
-        COL_ATK=t["COL_ATK"]; COL_SPA=t["COL_SPA"]; COL_VEL=t["COL_VEL"]
-        self.barra_bg_colore = t["BARRA_BG"]
-        self.bar_top_colore  = t["BAR_BG"]
+        TXT=t["TXT"]; TXT2=t["TXT2"]; BORDER=t["BORDER"]; GOLD=t["GOLD"]
+        COL_HP=t["COL_HP"]
+        self.barra_bg_colore    = t["BARRA_BG"]
+        self.bar_top_colore     = t["BAR_BG"]
         self.cartella_wallpaper = os.path.join(self.cartella_dati,
             "wallpaper_dark" if nome_tema=="scuro" else "wallpaper_light")
-        self.immagine_pannello = self._carica_immagine_stile(
-            f"panel_{nome_tema}.png", PANNELLO_L_W, H - BAR)
+        self.immagine_pannello  = self._carica_immagine_stile(f"panel_{nome_tema}.png",   PANNELLO_L_W,    H - BAR)
+        self.immagine_bigpanel  = self._carica_immagine_stile(f"bigpanel_{nome_tema}.png", W - PANNELLO_L_W, H - BAR)
         self.cache_stile = {}
         self._init_nuvole()
         self._init_stelle()
 
     def _init_nuvole(self):
         rng = random.Random(99)
-        ys = [BAR+30,BAR+55,BAR+20,BAR+65,BAR+35,
-              BAR+180,BAR+300,BAR+400,BAR+250,BAR+160,BAR+350]
+        ys = [BAR+30,BAR+55,BAR+20,BAR+65,BAR+35,BAR+180,BAR+300,BAR+400,BAR+250,BAR+160,BAR+350]
         self.nuvole_anim = [
             {"k":k+1,"x":float(rng.randint(-200,W+100)),"y":float(ys[k]),"vx":rng.uniform(0.3,0.9)}
             for k in range(11)
@@ -274,10 +280,14 @@ class Finestra:
         self.stelle_anim = [
             {"x":float(rng.randint(0,W)),"y":float(rng.randint(BAR+4,H-10)),
              "vx":rng.uniform(-0.15,0.15),"vy":rng.uniform(-0.08,0.08),
-             "r":rng.randint(1,3),"bright":rng.randint(150,255),
-             "fase":rng.uniform(0,math.pi*2)}
+             "r":rng.randint(1,3),"bright":rng.randint(150,255),"fase":rng.uniform(0,math.pi*2)}
             for _ in range(80)
         ]
+
+    def _toggle_fullscreen(self):
+        self.is_fullscreen = not self.is_fullscreen
+        flags = pygame.FULLSCREEN | pygame.SRCALPHA if self.is_fullscreen else pygame.SRCALPHA
+        self.schermo = pygame.display.set_mode((W, H), flags)
 
     # -----------------------------------------------------------
     # DISEGNO PRINCIPALE
@@ -286,13 +296,19 @@ class Finestra:
     def _disegna_frame(self):
         self._sfondo()
         self._barra_top()
-        if   self.schermata_corrente == "difficolta": self._disegna_difficolta()
-        elif self.schermata_corrente == "selezione":  self._disegna_selezione()
-        elif self.schermata_corrente == "tabellone":  self._disegna_tabellone()
-        elif self.schermata_corrente == "battaglia":  self._disegna_battaglia()
-        elif self.schermata_corrente == "campione":   self._disegna_campione()
+        s = self.schermata_corrente
+        if   s == "difficolta": self._disegna_difficolta()
+        elif s == "selezione":  self._disegna_selezione()
+        elif s == "tabellone":  self._disegna_tabellone()
+        elif s == "battaglia":  self._disegna_battaglia()
+        elif s == "campione":   self._disegna_campione()
         else:
             self._txt(W//2, H//2, "CARICAMENTO...", self.font_grande, col(ACCENT), "center")
+
+        if self.is_fullscreen:
+            sw, sh = self.schermo.get_size()
+            if sh > H: pygame.draw.rect(self.schermo, (0,0,0), pygame.Rect(0, H, sw, sh-H))
+            if sw > W: pygame.draw.rect(self.schermo, (0,0,0), pygame.Rect(W, 0, sw-W, sh))
 
     # -----------------------------------------------------------
     # PRIMITIVE
@@ -301,15 +317,15 @@ class Finestra:
     def _txt(self, x, y, testo, font, colore, ancora="nw"):
         img = font.render(str(testo), True, colore)
         w, h = img.get_width(), img.get_height()
-        if   ancora=="nw":     px,py = x,       y
-        elif ancora=="w":      px,py = x,       y-h//2
-        elif ancora=="e":      px,py = x-w,     y-h//2
-        elif ancora=="ne":     px,py = x-w,     y
-        elif ancora=="center": px,py = x-w//2,  y-h//2
-        elif ancora=="n":      px,py = x-w//2,  y
-        elif ancora=="s":      px,py = x-w//2,  y-h
-        elif ancora=="se":     px,py = x-w,     y-h
-        else:                  px,py = x,       y
+        if   ancora=="nw":     px,py = x,      y
+        elif ancora=="w":      px,py = x,      y-h//2
+        elif ancora=="e":      px,py = x-w,    y-h//2
+        elif ancora=="ne":     px,py = x-w,    y
+        elif ancora=="center": px,py = x-w//2, y-h//2
+        elif ancora=="n":      px,py = x-w//2, y
+        elif ancora=="s":      px,py = x-w//2, y-h
+        elif ancora=="se":     px,py = x-w,    y-h
+        else:                  px,py = x,      y
         self.schermo.blit(img, (px, py))
         return w, h
 
@@ -324,16 +340,11 @@ class Finestra:
         if sfondo: pygame.draw.rect(self.schermo, col(sfondo), r, 0, border_radius=raggio)
         if bordo:  pygame.draw.rect(self.schermo, col(bordo),  r, sp, border_radius=raggio)
 
-    def _px(self, x1, y1, x2, y2, sfondo, bordo=None, ombra=True):
-        # Rettangolo pixel-art: angoli quadrati, ombra nera dura
-        lw,lh = x2-x1, y2-y1
+    def _px(self, x1, y1, x2, y2, sfondo, ombra=True):
+        lw, lh = x2-x1, y2-y1
         if ombra:
-            pygame.draw.rect(self.schermo, (0,0,0), pygame.Rect(x1+3,y1+3,lw,lh))
-        pygame.draw.rect(self.schermo, col(sfondo), pygame.Rect(x1,y1,lw,lh))
-        b = bordo if bordo else sfondo
-        pygame.draw.rect(self.schermo, col(b), pygame.Rect(x1,y1,lw,lh), 2)
-        for qx,qy in [(x1,y1),(x2-4,y1),(x1,y2-4),(x2-4,y2-4)]:
-            pygame.draw.rect(self.schermo, (0,0,0), pygame.Rect(qx,qy,4,4))
+            pygame.draw.rect(self.schermo, (0,0,0), pygame.Rect(x1+3,y1+3,lw,lh), 0, 10)
+        pygame.draw.rect(self.schermo, col(sfondo), pygame.Rect(x1,y1,lw,lh), 0, 10)
 
     def _linea(self, x1, y1, x2, y2, colore, sp=1):
         pygame.draw.line(self.schermo, col(colore), (x1,y1), (x2,y2), sp)
@@ -350,13 +361,17 @@ class Finestra:
         if massimo > 0 and valore > 0:
             pieni = max(0, int(lw * min(valore,massimo)/massimo))
             if pieni > 0:
-                pygame.draw.rect(self.schermo, col(c_fill),
-                                 pygame.Rect(x,y,pieni,lh), 0, border_radius=raggio)
+                pygame.draw.rect(self.schermo, col(c_fill), pygame.Rect(x,y,pieni,lh), 0, border_radius=raggio)
 
     def _overlay(self):
         s = pygame.Surface((W, H), pygame.SRCALPHA)
         s.fill((0,0,0,160))
         self.schermo.blit(s, (0,0))
+
+    def _btn_continua(self, label="[ CONTINUA ]"):
+        x1,y1,x2,y2 = self._rett_cont()
+        self._px(x1,y1,x2,y2,ACCENT)
+        self._txt((x1+x2)//2,(y1+y2)//2, label, self.font_grassetto, col(BG), "center")
 
     # -----------------------------------------------------------
     # IMMAGINI
@@ -387,7 +402,11 @@ class Finestra:
         ext = (".png",".jpg",".jpeg",".bmp",".webp")
         files = [f for f in os.listdir(self.cartella_wallpaper) if f.lower().endswith(ext)]
         if not files: return None
-        percorso = os.path.join(self.cartella_wallpaper, random.choice(files))
+        if len(files) > 1 and self.ultimo_wallpaper in files:
+            files = [f for f in files if f != self.ultimo_wallpaper]
+        scelta = random.choice(files)
+        self.ultimo_wallpaper = scelta
+        percorso = os.path.join(self.cartella_wallpaper, scelta)
         try:
             from PIL import Image
             img = Image.open(percorso).convert("RGBA").resize(area, Image.LANCZOS)
@@ -398,27 +417,11 @@ class Finestra:
             return pygame.transform.scale(sup, area)
         except: return None
 
-    def _nomi_file(self, nome):
-        n = nome.lower()
-        candidati = [
-            n, n.replace(" ","_"), n.replace(" ","-"), n.replace("-","_"), n.replace(" ",""),
-            n.replace(".","").replace(" ","-"), n.replace(".","").replace(" ","_"),
-            n.replace(".","").replace(" ",""), n.replace(":","").replace(" ","_"),
-            n.replace(":","").replace(" ",""), n.replace(": ","-").replace(" ","_"),
-            n.replace(".","").replace(":","").replace(" ","_"),
-            n.replace(".","").replace(":","").replace(" ",""),
-        ]
-        visti,risultato = set(),[]
-        for c in candidati:
-            nf = c+".png"
-            if nf not in visti:
-                visti.add(nf); risultato.append(nf)
-        return risultato
-
     def _carica_immagine(self, nome, dim, specchiata=False):
         chiave = (nome, dim, specchiata)
         if chiave in self.cache_immagini: return self.cache_immagini[chiave]
-        for nf in self._nomi_file(nome):
+        n = nome.lower()
+        for nf in [n+".png", n.replace(" ","-")+".png"]:
             percorso = os.path.join(self.cartella_immagini, nf)
             if not os.path.isfile(percorso): continue
             try:
@@ -442,21 +445,19 @@ class Finestra:
     def _sprite_libero(self, pokemon, cx, cy, dim):
         img = self._carica_immagine(pokemon["nome"], dim)
         if img:
-            off_y = int(dim*0.20)
-            self.schermo.blit(img, (cx-dim//2, cy-dim//2-off_y))
+            self.schermo.blit(img, (cx-dim//2, cy-dim//2-int(dim*0.20)))
         else:
             tipo = pokemon["tipi"][0] if pokemon["tipi"] else "Normal"
             self._txt(cx,cy,pokemon["nome"][0].upper(),self.font_titolo,col(TIPO_COL.get(tipo,TXT2)),"center")
 
-    def _sprite_cerchio(self, pokemon, cx, cy, raggio, off_v=None):
-        if off_v is None: off_v = SPR_CER_OFF_PAN
+    def _sprite_cerchio(self, pokemon, cx, cy, raggio):
         tipo = pokemon["tipi"][0] if pokemon["tipi"] else "Normal"
-        ct = TIPO_COL.get(tipo, TXT2)
+        ct   = TIPO_COL.get(tipo, TXT2)
         self._cerchio(cx,cy,raggio,sfondo=BG3,bordo=ct,sp=2)
         dim = int(raggio*3)
         img = self._carica_immagine(pokemon["nome"], dim)
         if img:
-            self.schermo.blit(img, (cx-dim//2, cy-dim//2-int(dim*off_v)))
+            self.schermo.blit(img, (cx-dim//2, cy-dim//2-int(dim*SPR_CER_OFF)))
         else:
             self._txt(cx,cy,pokemon["nome"][0].upper(),self.font_grassetto,col(ct),"center")
         self._cerchio(cx,cy,raggio+1,bordo=ct,sp=1)
@@ -489,11 +490,12 @@ class Finestra:
                 self.log_battaglia      = []
 
             elif tipo == "selezione":
-                self.lista_pokemon      = m["pool"]
-                self.schermata_corrente = "selezione"
-                self.hover_indice       = -1
-                self.selezionato_indice = -1
-                self.scroll_righe       = 0
+                self.lista_pokemon       = m["pool"]
+                self.difficolta_corrente = m.get("difficolta","")
+                self.schermata_corrente  = "selezione"
+                self.hover_indice        = -1
+                self.selezionato_indice  = -1
+                self.scroll_righe        = 0
 
             elif tipo == "tabellone":
                 self.bracket_dati        = m["bracket"]
@@ -503,26 +505,28 @@ class Finestra:
                 self.schermata_corrente  = "tabellone"
 
             elif tipo == "battaglia_inizia":
-                self.pokemon_giocatore   = m["giocatore"]
-                self.pokemon_avversario  = m["avversario"]
-                self.nome_round_batt     = m.get("round","")
-                self.log_battaglia       = []
-                self.e_turno_mio         = False
-                self.mostra_continua     = False
-                self.messaggio_risultato = ""
-                self.pozioni_norm = self.pokemon_giocatore["pozioni_normali"]
-                self.pozioni_spec = self.pokemon_giocatore["pozioni_speciali"]
+                g = m["giocatore"]; a = m["avversario"]
+                self.pokemon_giocatore      = g
+                self.pokemon_avversario     = a
+                self.nome_round_batt        = m.get("round","")
+                self.nome_pokemon_giocatore = g.get("nome","")
+                self.log_battaglia          = []
+                self.e_turno_mio            = False
+                self.mostra_continua        = False
+                self.messaggio_risultato    = ""
+                self.pozioni_norm           = g["pozioni_normali"]
+                self.pozioni_spec           = g["pozioni_speciali"]
                 self.offset_x_giocatore = self.offset_x_avversario = 0
                 self.animazione_scatto = self.animazione_scatto_avv = self.animazione_ko = None
                 self.opacita_giocatore = self.opacita_avversario = 255
-                self.numeri_fluttuanti  = []; self.particelle_speciali = []
-                self.onde_impatto       = []; self.particelle_impatto  = []
-                self.speed_lines        = []; self.bolle_cura          = []
-                self.scia_attiva        = None
-                self.shake_schermo      = None
-                self.offset_shake_x     = self.offset_shake_y = 0
-                self._carica_immagine(self.pokemon_giocatore["nome"], SPR_B)
-                self._carica_immagine(self.pokemon_avversario["nome"], SPR_B)
+                self.numeri_fluttuanti = []; self.particelle_speciali = []
+                self.onde_impatto      = []; self.particelle_impatto  = []
+                self.speed_lines       = []; self.bolle_cura          = []
+                self.scia_attiva       = None
+                self.shake_schermo     = None
+                self.offset_shake_x    = self.offset_shake_y = 0
+                self._carica_immagine(g["nome"], SPR_B)
+                self._carica_immagine(a["nome"], SPR_B)
                 if self.wallpaper_corrente is None:
                     self.wallpaper_corrente = self._carica_wallpaper()
                 self.schermata_corrente = "battaglia"
@@ -543,23 +547,23 @@ class Finestra:
                 valori = [(v[0],ctk(v[1])) for v in m["valori"]]
                 self.animazione_scatto = {"chi":chi,"frame":0,"durata":10}
                 self.shake_schermo     = {"frame":0,"durata":8,"intensita":5}
-                if chi == "giocatore":
-                    ix=AX+SPR_B//2; iy=AY+int(SPR_B*0.55); dir_x=1.0
-                    ox=GX+SPR_B//2; oy=GY+int(SPR_B*0.55)
-                else:
-                    ix=GX+SPR_B//2; iy=GY+int(SPR_B*0.55); dir_x=-1.0
-                    ox=AX+SPR_B//2; oy=AY+int(SPR_B*0.55)
-                bersaglio = "avversario" if chi=="giocatore" else "giocatore"
+                e_gio = chi=="giocatore"
+                ix = (AX if e_gio else GX)+SPR_B//2
+                iy = (AY if e_gio else GY)+int(SPR_B*0.55)
+                ox = (GX if e_gio else AX)+SPR_B//2
+                oy = (GY if e_gio else AY)+int(SPR_B*0.55)
+                dir_x = 1.0 if e_gio else -1.0
+                bersaglio = "avversario" if e_gio else "giocatore"
                 for k in range(3):
                     self.onde_impatto.append({
                         "chi_bersaglio":bersaglio,"raggio":0,"raggio_max":80+k*40,
                         "colore":(255,220,80),"alpha":220-k*50,"eta":k*3,"durata":14})
                 for _ in range(20):
-                    angolo = math.radians(random.uniform(-60,60))+(math.pi if dir_x>0 else 0)
+                    ang = math.radians(random.uniform(-60,60))+(math.pi if dir_x>0 else 0)
                     vel = random.uniform(5,14)
                     self.particelle_impatto.append({
                         "chi_bersaglio":bersaglio,"x":float(ix),"y":float(iy),
-                        "vx":math.cos(angolo)*vel,"vy":math.sin(angolo)*vel-random.uniform(1,4),
+                        "vx":math.cos(ang)*vel,"vy":math.sin(ang)*vel-random.uniform(1,4),
                         "eta":0,"durata":random.randint(10,18),"raggio":random.randint(2,6),
                         "colore":random.choice([(255,200,50),(255,140,20),(255,255,150),(255,100,30)])})
                 for _ in range(8):
@@ -575,18 +579,18 @@ class Finestra:
                 va = [(v[0],ctk(v[1])) for v in m["valori_avv"]]
                 self.animazione_scatto     = {"chi":"giocatore","frame":0,"durata":10}
                 self.animazione_scatto_avv = {"chi":"avversario","frame":0,"durata":10}
-                self.shake_schermo = {"frame":0,"durata":10,"intensita":7}
+                self.shake_schermo         = {"frame":0,"durata":10,"intensita":7}
                 for chi_b,dir_x in [("avversario",1.0),("giocatore",-1.0)]:
                     for k in range(2):
                         self.onde_impatto.append({
                             "chi_bersaglio":chi_b,"raggio":0,"raggio_max":70+k*35,
                             "colore":(255,220,80),"alpha":200-k*60,"eta":k*3,"durata":12})
                     for _ in range(12):
-                        angolo = math.radians(random.uniform(-60,60))+(math.pi if dir_x>0 else 0)
+                        ang = math.radians(random.uniform(-60,60))+(math.pi if dir_x>0 else 0)
                         vel = random.uniform(4,11)
                         self.particelle_impatto.append({
                             "chi_bersaglio":chi_b,"x":0.0,"y":0.0,
-                            "vx":math.cos(angolo)*vel,"vy":math.sin(angolo)*vel-random.uniform(1,3),
+                            "vx":math.cos(ang)*vel,"vy":math.sin(ang)*vel-random.uniform(1,3),
                             "eta":0,"durata":random.randint(8,14),"raggio":random.randint(2,5),
                             "colore":random.choice([(255,200,50),(255,140,20),(255,255,150)])})
                 for i,(t,c) in enumerate(vg):
@@ -599,22 +603,19 @@ class Finestra:
                         "y":float(GY+int(SPR_B*0.18)-i*26),"eta":0,"durata":70})
 
             elif tipo == "anim_ko":
-                chi = m["chi"]
-                self.animazione_ko = {"chi":chi,"frame":0,"durata":14}
-                self.animazione_scatto = self.animazione_scatto_avv = None
-                self.offset_x_giocatore = self.offset_x_avversario = 0
+                self.animazione_ko         = {"chi":m["chi"],"frame":0,"durata":14}
+                self.animazione_scatto     = self.animazione_scatto_avv = None
+                self.offset_x_giocatore    = self.offset_x_avversario  = 0
 
             elif tipo == "anim_speciale":
                 chi  = m["chi"]
                 mult = m["moltiplicatore"]
-                if   mult > 1:  cscia = (255,215,  0)
-                elif mult == 0: cscia = ( 99,110,114)
-                elif mult < 1:  cscia = (116,185,255)
-                else:           cscia = (180,106,255)
+                cscia = (255,215,0) if mult>1 else ((99,110,114) if mult==0 else ((116,185,255) if mult<1 else (180,106,255)))
                 self.scia_attiva = {"chi":chi,"colore":cscia,"frame_rimasti":18}
-                dir_x = 1.0 if chi=="giocatore" else -1.0
-                ox = (GX if chi=="giocatore" else AX) + SPR_B//2
-                oy = (GY if chi=="giocatore" else AY) + int(SPR_B*0.55)
+                e_gio = chi=="giocatore"
+                ox = (GX if e_gio else AX)+SPR_B//2
+                oy = (GY if e_gio else AY)+int(SPR_B*0.55)
+                dir_x = 1.0 if e_gio else -1.0
                 for _ in range(10):
                     self.speed_lines.append({
                         "x1":float(ox),"y1":float(oy+random.uniform(-SPR_B*0.35,SPR_B*0.35)),
@@ -623,28 +624,27 @@ class Finestra:
             elif tipo == "anim_cura":
                 chi    = m["chi"]
                 valori = [(v[0],ctk(v[1])) for v in m["valori"]]
-                px = (GX+SPR_B//2) if chi=="giocatore" else (AX+SPR_B//2)
-                py = (GY+int(SPR_B*0.18)) if chi=="giocatore" else (AY+int(SPR_B*0.18))
+                e_gio  = chi=="giocatore"
+                px = (GX if e_gio else AX)+SPR_B//2
+                py = (GY if e_gio else AY)+int(SPR_B*0.18)
                 for i,(t,c) in enumerate(valori):
                     self.numeri_fluttuanti.append({
                         "testo":t,"colore":c,"x":float(px),"y":float(py-i*30),"eta":0,"durata":100})
-                bx = (GX+SPR_B//2) if chi=="giocatore" else (AX+SPR_B//2)
-                by = (GY+SPR_B-20) if chi=="giocatore" else (AY+SPR_B-20)
-                tipo_poz = m.get("tipo_pozione","normale")
-                c_bolla  = (160,80,255) if tipo_poz=="speciale" else (60,220,100)
+                c_bolla = (160,80,255) if m.get("tipo_pozione")=="speciale" else (60,220,100)
+                by_off  = (GY if e_gio else AY)+SPR_B-20
                 for _ in range(18):
                     self.bolle_cura.append({
-                        "x":float(bx+random.uniform(-SPR_B*0.28,SPR_B*0.28)),
-                        "y":float(by+random.uniform(-20,20)),
+                        "x":float(px+random.uniform(-SPR_B*0.28,SPR_B*0.28)),
+                        "y":float(by_off+random.uniform(-20,20)),
                         "vy":random.uniform(-3.5,-1.8),"vx":random.uniform(-0.8,0.8),
                         "raggio":random.randint(4,11),"eta":random.randint(0,8),
                         "durata":random.randint(20,35),"colore":c_bolla})
 
             elif tipo == "chiedi_mossa":
                 self.pokemon_giocatore = m["giocatore"]
-                self.pozioni_norm = self.pokemon_giocatore["pozioni_normali"]
-                self.pozioni_spec = self.pokemon_giocatore["pozioni_speciali"]
-                self.e_turno_mio  = True
+                self.pozioni_norm      = self.pokemon_giocatore["pozioni_normali"]
+                self.pozioni_spec      = self.pokemon_giocatore["pozioni_speciali"]
+                self.e_turno_mio       = True
 
             elif tipo == "risultato":
                 self.e_turno_mio         = False
@@ -707,12 +707,11 @@ class Finestra:
                 else:                self.opacita_avversario=0
                 self.animazione_ko=None
 
-        self.numeri_fluttuanti=[
+        self.numeri_fluttuanti = [
             {**n,"y":n["y"]-1.2,"eta":n["eta"]+1}
             for n in self.numeri_fluttuanti if n["eta"]+1<n["durata"]
         ]
 
-        # Onde d'urto
         onde_vive=[]
         for o in self.onde_impatto:
             o["eta"]+=1
@@ -721,7 +720,6 @@ class Finestra:
                 onde_vive.append(o)
         self.onde_impatto=onde_vive
 
-        # Particelle impatto
         pi_vive=[]
         for p in self.particelle_impatto:
             if p["eta"]==0:
@@ -736,7 +734,6 @@ class Finestra:
             if p["eta"]<p["durata"]: pi_vive.append(p)
         self.particelle_impatto=pi_vive
 
-        # Bolle cura
         bolle_vive=[]
         for b in self.bolle_cura:
             b["eta"]+=1
@@ -746,10 +743,8 @@ class Finestra:
             if b["eta"]<b["durata"]: bolle_vive.append(b)
         self.bolle_cura=bolle_vive
 
-        # Speed lines
         self.speed_lines=[{**sl,"eta":sl["eta"]+1} for sl in self.speed_lines if sl["eta"]+1<sl["durata"]]
 
-        # Shake schermo
         if self.shake_schermo is not None:
             f=self.shake_schermo["frame"]; d=self.shake_schermo["durata"]
             intens=self.shake_schermo["intensita"]
@@ -762,15 +757,15 @@ class Finestra:
                 self.offset_shake_x=self.offset_shake_y=0
                 self.shake_schermo=None
 
-        # Scia attacco speciale
         if self.scia_attiva is not None:
             chi_s=self.scia_attiva["chi"]; cscia=self.scia_attiva["colore"]
-            sx=(GX+self.offset_x_giocatore+SPR_B//2) if chi_s=="giocatore" else (AX+self.offset_x_avversario+SPR_B//2)
-            sy=(GY+SPR_B//2-int(SPR_B*SPR_OFF))      if chi_s=="giocatore" else (AY+SPR_B//2-int(SPR_B*SPR_OFF))
+            e_gio=chi_s=="giocatore"
+            sx=(GX+self.offset_x_giocatore if e_gio else AX+self.offset_x_avversario)+SPR_B//2
+            sy=(GY if e_gio else AY)+SPR_B//2-int(SPR_B*SPR_OFF)
             for _ in range(4):
-                angolo=math.radians(random.uniform(0,360)); dist=random.uniform(SPR_B*0.1,SPR_B*0.3)
+                ang=math.radians(random.uniform(0,360)); dist=random.uniform(SPR_B*0.1,SPR_B*0.3)
                 self.particelle_speciali.append({
-                    "x":float(sx+math.cos(angolo)*dist),"y":float(sy+math.sin(angolo)*dist*0.6),
+                    "x":float(sx+math.cos(ang)*dist),"y":float(sy+math.sin(ang)*dist*0.6),
                     "vx":random.uniform(-1.5,1.5),"vy":random.uniform(-2.5,-0.5),
                     "eta":0,"durata":random.randint(8,16),"raggio":random.randint(3,7),"colore":cscia})
             self.scia_attiva["frame_rimasti"]-=1
@@ -782,20 +777,18 @@ class Finestra:
             if p["eta"]<p["durata"]: vive.append(p)
         self.particelle_speciali=vive
 
-        # Nuvole animate (tema chiaro, schermata difficolta')
-        if self.schermata_corrente=="difficolta" and self.tema=="chiaro":
-            for n in self.nuvole_anim:
-                n["x"]+=n["vx"]
-                if n["x"] > W+300: n["x"]=-300.0
-
-        # Stelle animate (tema scuro, schermata difficolta')
-        if self.schermata_corrente=="difficolta" and self.tema=="scuro":
-            for s in self.stelle_anim:
-                s["x"]+=s["vx"]; s["y"]+=s["vy"]; s["fase"]+=0.04
-                if s["x"]<0:   s["x"]=float(W)
-                if s["x"]>W:   s["x"]=0.0
-                if s["y"]<BAR: s["y"]=float(H-10)
-                if s["y"]>H:   s["y"]=float(BAR+4)
+        if self.schermata_corrente=="difficolta":
+            if self.tema=="chiaro":
+                for n in self.nuvole_anim:
+                    n["x"]+=n["vx"]
+                    if n["x"]>W+300: n["x"]=-300.0
+            else:
+                for s in self.stelle_anim:
+                    s["x"]+=s["vx"]; s["y"]+=s["vy"]; s["fase"]+=0.04
+                    if s["x"]<0:   s["x"]=float(W)
+                    if s["x"]>W:   s["x"]=0.0
+                    if s["y"]<BAR: s["y"]=float(H-10)
+                    if s["y"]>H:   s["y"]=float(BAR+4)
 
     # -----------------------------------------------------------
     # EVENTI MOUSE
@@ -818,16 +811,17 @@ class Finestra:
         if s=="difficolta":
             if self._in(x,y,self._rett_toggle()):
                 self._applica_tema("chiaro" if self.tema=="scuro" else "scuro")
-                self.wallpaper_corrente=None
-                return
+                self.wallpaper_corrente=None; return
             for i,r in enumerate(self._rett_diff()):
                 if self._in(x,y,r):
-                    self.coda_risposte.put({"tipo":"difficolta","valore":["facile","media","difficile"][i]})
-                    return
+                    self.coda_risposte.put({"tipo":"difficolta","valore":["facile","media","difficile"][i]}); return
         elif s=="selezione":
+            if self._in(x,y,self._rett_indietro()):
+                self.coda_risposte.put({"tipo":"indietro"}); return
             if self.selezionato_indice>=0 and self._in(x,y,self._rett_inizia()):
-                self.coda_risposte.put({"tipo":"pokemon","valore":self.lista_pokemon[self.selezionato_indice]})
-                return
+                pk=self.lista_pokemon[self.selezionato_indice]
+                self.nome_pokemon_giocatore=pk.get("nome","")
+                self.coda_risposte.put({"tipo":"pokemon","valore":pk}); return
             idx=self._cella(x,y)
             if idx>=0: self.selezionato_indice=self.hover_indice=idx
         elif s=="battaglia":
@@ -856,7 +850,20 @@ class Finestra:
 
     def _in(self, px, py, r): return r[0]<=px<=r[2] and r[1]<=py<=r[3]
 
-    def _rett_sb(self): return (W-16, GRIGLIA_ORIG_Y, 10, H-GRIGLIA_ORIG_Y-8)
+    def _rett_sb(self):      return (W-16, GRIGLIA_ORIG_Y, 10, H-GRIGLIA_ORIG_Y-8)
+    def _rett_inizia(self):  return (W-115, 4, W-10,  BAR-4)
+    def _rett_indietro(self):return (W-230, 4, W-120, BAR-4)
+    def _rett_cont(self):
+        lw,lh=260,48; x1=W//2-lw//2; return (x1,H-76,x1+lw,H-76+lh)
+    def _rett_toggle(self):
+        tw,th=160,60; return (W//2-tw//2,H-110,W//2+tw//2,H-110+th)
+    def _rett_diff(self):
+        lw,lh,gap=420,76,18
+        y0=BAR+(H-BAR-lh*3-gap*2)//2; cx=W//2
+        return [(cx-lw//2,y0+i*(lh+gap),cx+lw//2,y0+i*(lh+gap)+lh) for i in range(3)]
+    def _rett_mosse(self):
+        lw_log=int(W*0.72); xi=lw_log+6; lw=W-xi-8; lh=(LOW-16)//4-6
+        return [(xi,H-LOW+8+i*(lh+6),xi+lw,H-LOW+8+i*(lh+6)+lh) for i in range(4)]
 
     def _scrollbar_inizia_drag(self, x, y):
         if self.schermata_corrente!="selezione": return False
@@ -868,13 +875,7 @@ class Finestra:
         if not self.sb_dragging: return
         _,sb_y,_,sb_h=self._rett_sb()
         numero_righe=math.ceil(len(self.lista_pokemon)/GRIGLIA_COLONNE)
-        scroll_max=max(1,numero_righe-7)
-        self.scroll_righe=max(0,min(scroll_max,int((y-sb_y)/sb_h*numero_righe)))
-
-    def _rett_diff(self):
-        lw,lh,gap=420,76,18
-        y0=BAR+(H-BAR-lh*3-gap*2)//2; cx=W//2
-        return [(cx-lw//2,y0+i*(lh+gap),cx+lw//2,y0+i*(lh+gap)+lh) for i in range(3)]
+        self.scroll_righe=max(0,min(max(1,numero_righe-7),int((y-sb_y)/sb_h*numero_righe)))
 
     def _cella(self, mx, my):
         if mx<GRIGLIA_ORIG_X or my<GRIGLIA_ORIG_Y: return -1
@@ -886,43 +887,33 @@ class Finestra:
         idx=(self.scroll_righe+r)*GRIGLIA_COLONNE+c
         return idx if 0<=idx<len(self.lista_pokemon) else -1
 
-    def _rett_inizia(self): return (W-230,4,W-10,BAR-4)
-    def _rett_cont(self):
-        lw,lh=260,48; x1=W//2-lw//2; return (x1,H-76,x1+lw,H-76+lh)
-    def _rett_toggle(self):
-        tw,th=160,60; return (W//2-tw//2,H-110,W//2+tw//2,H-110+th)
-    def _rett_mosse(self):
-        lw_log=int(W*0.72); xi=lw_log+6; lw=W-xi-8; lh=(LOW-16)//4-6
-        return [(xi,H-LOW+8+i*(lh+6),xi+lw,H-LOW+8+i*(lh+6)+lh) for i in range(4)]
-
     # -----------------------------------------------------------
     # ELEMENTI COMUNI
     # -----------------------------------------------------------
 
     def _sfondo(self):
         self.schermo.fill(col(BG))
-        if self.schermata_corrente!="battaglia":
-            c_g=(30,10,50) if self.tema=="scuro" else (180,210,235)
+        if self.schermata_corrente not in ("battaglia","tabellone","campione") and self.tema!="scuro":
+            c_g=(180,210,235)
             for x in range(0,W,80): self._linea(x,0,x,H,c_g)
             for y in range(0,H,80): self._linea(0,y,W,y,c_g)
 
     def _barra_top(self):
-        self._rett(0,0,W,BAR,sfondo=self.bar_top_colore)
-        self._linea(0,BAR,  W,BAR,  ACCENT,3)
-        # self._linea(0,BAR-2,W,BAR-2,ACCENT2,1)
-        # pygame.draw.rect(self.schermo,col(ACCENT2),pygame.Rect(8,BAR//2-6,4,4))
-        # pygame.draw.rect(self.schermo,col(ACCENT2),pygame.Rect(8,BAR//2+4,4,4))
+        if self.schermata_corrente=="difficolta" and self.tema=="chiaro":
+            sfondo_barra = (100,185,255)
+        else:
+            sfondo_barra = self.bar_top_colore
+        self._rett(0,0,W,BAR,sfondo=sfondo_barra)
         self._txt(18,BAR//2,"POKEMON TOURNAMENT",self.font_grassetto,col(ACCENT),"w")
-        sub={"selezione":"SCEGLI IL TUO POKEMON",
-             "tabellone":self.nome_round_att.upper(),
+
+        if self.schermata_corrente=="selezione" and self.difficolta_corrente:
+            c_diff={"facile":OK,"media":WARN,"difficile":ERR}.get(self.difficolta_corrente,TXT2)
+            self._txt(W//2,BAR//2,self.difficolta_corrente.upper(),self.font_titolo,col(c_diff),"center")
+
+        sub={"tabellone":self.nome_round_att.upper(),
              "battaglia":self.nome_round_batt.upper(),
              "campione":"CAMPIONE!"}.get(self.schermata_corrente,"")
-        if sub: self._txt(W-16,BAR//2,sub,self.font_nome,col(TXT2),"e")
-
-    def _btn_continua(self):
-        x1,y1,x2,y2=self._rett_cont()
-        self._px(x1,y1,x2,y2,ACCENT2,ACCENT)
-        self._txt((x1+x2)//2,(y1+y2)//2,"[ CONTINUA ]",self.font_grassetto,col(TXT),"center")
+        if sub: self._txt(W-16,BAR//2,sub,self.font_grassetto,col(TXT2),"e")
 
     # -----------------------------------------------------------
     # SCHERMATA: DIFFICOLTA'
@@ -932,8 +923,8 @@ class Finestra:
         x1,y1,x2,y2=self._rett_toggle()
         lw=x2-x1; lh=y2-y1; raggio=lh//2
         e_scuro=(self.tema=="scuro")
-        sfondo_c=(15,20,45) if e_scuro else (100,180,240)
-        pygame.draw.rect(self.schermo,sfondo_c,pygame.Rect(x1,y1,lw,lh),0,border_radius=raggio)
+        pygame.draw.rect(self.schermo,(15,20,45) if e_scuro else (100,180,240),
+                         pygame.Rect(x1,y1,lw,lh),0,border_radius=raggio)
         if e_scuro:
             for sx_,sy_ in [(x1+18,y1+12),(x1+40,y1+30),(x1+28,y1+42),(x1+55,y1+18),(x1+70,y1+38)]:
                 pygame.draw.circle(self.schermo,(255,255,255),(sx_,sy_),2)
@@ -954,19 +945,17 @@ class Finestra:
                 pygame.draw.line(self.schermo,(255,190,20),
                     (tx+int(math.cos(rad)*(thumb_r+3)),y1+lh//2+int(math.sin(rad)*(thumb_r+3))),
                     (tx+int(math.cos(rad)*(thumb_r+8)),y1+lh//2+int(math.sin(rad)*(thumb_r+8))),2)
-        bordo_c=(50,70,120) if e_scuro else (50,130,190)
-        pygame.draw.rect(self.schermo,bordo_c,pygame.Rect(x1,y1,lw,lh),2,border_radius=raggio)
+        pygame.draw.rect(self.schermo,(50,70,120) if e_scuro else (50,130,190),
+                         pygame.Rect(x1,y1,lw,lh),2,border_radius=raggio)
         self._txt(W//2,y2+8,"NOTTE" if e_scuro else "GIORNO",self.font_piccolo,col(TXT2),"n")
 
     def _disegna_difficolta(self):
-        # Sfondo cielo per tema chiaro
         if self.tema=="chiaro":
             for iy in range(BAR,H):
                 p=(iy-BAR)/(H-BAR)
                 pygame.draw.line(self.schermo,
                     (int(100+(160-100)*p),int(185+(220-185)*p),255),(0,iy),(W,iy))
 
-        # Elementi ambientali
         if self.tema=="scuro":
             for s in self.stelle_anim:
                 lum=int(s["bright"]*(0.6+0.4*math.sin(s["fase"])))
@@ -977,9 +966,9 @@ class Finestra:
                 pygame.draw.circle(self.schermo,(220,220,180),(W-215,BAR+75),55)
                 pygame.draw.circle(self.schermo,col(BG),(W-195,BAR+60),42)
         else:
-            sun=self._carica_stile_cached("sun.png",120,120)
+            sun=self._carica_stile_cached("sun.png",130,130)
             if sun: self.schermo.blit(sun,(W-270,BAR+20))
-            else: pygame.draw.circle(self.schermo,(255,220,50),(W-215,BAR+75),52)
+            else:   pygame.draw.circle(self.schermo,(255,220,50),(W-215,BAR+75),52)
             cartella_stile=os.path.join(self.cartella_dati,"style")
             for n in self.nuvole_anim:
                 k=n["k"]; nome_cloud=f"cloud{k}.png"
@@ -1001,36 +990,19 @@ class Finestra:
                 cloud=self._carica_stile_cached(nome_cloud,int(nat[0]*1.2),int(nat[1]*1.2))
                 if cloud: self.schermo.blit(cloud,(int(n["x"]),int(n["y"])))
 
-        # Sprite decorativi
-        # ys=[170,320,460,590,700]
-        # psx=[(65,ys[0]),(215,ys[1]),(60,ys[2]),(210,ys[3]),(70,ys[4])]
-        # pdx=[(W-65,ys[0]),(W-215,ys[1]),(W-60,ys[2]),(W-210,ys[3]),(W-70,ys[4])]
-        # for i,p in enumerate(self.lista_pokemon[:5]):  self._sprite_libero(p,psx[i][0],psx[i][1],270)
-        # for i,p in enumerate(self.lista_pokemon[5:10]): self._sprite_libero(p,pdx[i][0],pdx[i][1],270)
-
-        # Titolo
-        self._txt(W//2,BAR+38,"SCEGLI  LA  DIFFICOLTA'",self.font_titolo,col(BEA),"n")
+        self._txt(W//2,BAR+38,"SCEGLI LA DIFFICOLTA'",self.font_titolo,col(ACCENT),"n")
         ty=BAR+38+self.font_titolo.get_height()+4
         pygame.draw.rect(self.schermo,col(ACCENT),pygame.Rect(W//2-180,ty,360,3))
-        pygame.draw.rect(self.schermo,col(ACCENT2),pygame.Rect(W//2-160,ty+3,320,3))
-        pygame.draw.rect(self.schermo,col(ACCENT),pygame.Rect(W//2-140,ty+6,280,3))
-        pygame.draw.rect(self.schermo,col(ACCENT2),pygame.Rect(W//2-120,ty+9,240,3))
-        pygame.draw.rect(self.schermo,col(ACCENT),pygame.Rect(W//2-100,ty+12,200,3))
-        pygame.draw.rect(self.schermo,col(ACCENT2),pygame.Rect(W//2-80,ty+15,160,3))
-        
 
-        # Bottoni difficolta'
-        nomi=["FACILE","MEDIA","DIFFICILE"]
-        # descr=["CPU a caso","CPU sceglie meglio","CPU conosce la tua mossa"]
-        clist=[OK,WARN,ERR]
+        nomi=["FACILE","MEDIA","DIFFICILE"]; clist=[OK,WARN,ERR]
         for i,(x1,y1,x2,y2) in enumerate(self._rett_diff()):
             c=clist[i]; cy=(y1+y2)//2; hover=(i==self.hover_difficolta)
-            pygame.draw.rect(self.schermo,(0,0,0),pygame.Rect(x1+4,y1+4,x2-x1,y2-y1),border_radius=10)
-            pygame.draw.rect(self.schermo,col(c if hover else BG3),pygame.Rect(x1,y1,x2-x1,y2-y1),border_radius=10)
-            pygame.draw.rect(self.schermo,col(c),pygame.Rect(x1,y1,x2-x1,y2-y1),3,border_radius=10)
-            tc=BG if hover else TXT2; nc=BG if hover else c
-            self._txt(x1+15,cy,nomi[i],  self.font_grande,col(nc),"w")
-            self._txt(x2-18,cy,">",          self.font_simboli_b,col(nc),"e")
+            pygame.draw.rect(self.schermo,(0,0,0),pygame.Rect(x1+4,y1+4,x2-x1,y2-y1),0,10)
+            pygame.draw.rect(self.schermo,col(c if hover else BG3),pygame.Rect(x1,y1,x2-x1,y2-y1),0,10)
+            pygame.draw.rect(self.schermo,col(c),pygame.Rect(x1,y1,x2-x1,y2-y1),3,10)
+            nc=BG if hover else c
+            self._txt(x1+30,cy,nomi[i],self.font_grande,col(nc),"w")
+            self._txt(x2-18,cy,">",self.font_simboli_b,col(nc),"e")
 
         self._disegna_toggle()
 
@@ -1039,30 +1011,34 @@ class Finestra:
     # -----------------------------------------------------------
 
     def _disegna_selezione(self):
-        self._rett(0,BAR,PANNELLO_L_W,H,sfondo=BG2,bordo=BORDER)
+        self._rett(0,BAR,PANNELLO_L_W,H,sfondo=BG2)
         if self.immagine_pannello is not None:
             self.schermo.blit(self.immagine_pannello,(0,BAR))
-        self._linea(PANNELLO_L_W,BAR,PANNELLO_L_W,H,ACCENT)
 
         if 0<=self.selezionato_indice<len(self.lista_pokemon):
             self._pannello_stats(self.lista_pokemon[self.selezionato_indice])
         else:
-            self._txt(PANNELLO_L_W//2,H//2-20,"CLICCA UN",self.font_grassetto,col(TXT2),"center")
-            self._txt(PANNELLO_L_W//2,H//2+5, "POKEMON",  self.font_grassetto,col(TXT2),"center")
+            self._txt(PANNELLO_L_W//2,H//2-17,"CLICCA UN",self.font_grassetto,col(TXT2),"center")
+            self._txt(PANNELLO_L_W//2,H//2+10,"POKEMON",  self.font_grassetto,col(TXT2),"center")
 
+        # Pulsante INDIETRO
+        xb1,yb1,xb2,yb2=self._rett_indietro()
+        pygame.draw.rect(self.schermo,(0,0,0),pygame.Rect(xb1+3,yb1+3,xb2-xb1,yb2-yb1),0,4)
+        pygame.draw.rect(self.schermo,col(ACCENT),pygame.Rect(xb1,yb1,xb2-xb1,yb2-yb1),0,4)
+        self._txt((xb1+xb2)//2,(yb1+yb2)//2,"INDIETRO",self.font_simboli_s,col(BG),"center")
+
+        # Pulsante INIZIA / SCEGLI
         x1,y1,x2,y2=self._rett_inizia()
-        attivo=self.selezionato_indice>=0
-        if attivo:
-            pygame.draw.rect(self.schermo,(0,0,0),pygame.Rect(x1+3,y1+1,x2-x1,y2-y1),0,4)
-            pygame.draw.rect(self.schermo,col(ACCENT),pygame.Rect(x1,y1-2,x2-x1,y2-y1),0,4)
-            # for qx,qy in [(x1,y1),(x2-4,y1),(x1,y2-4),(x2-4,y2-4)]:
-            #     pygame.draw.rect(self.schermo,(0,0,0),pygame.Rect(qx,qy,4,4))
-            self._txt((x1+x2)//2,(y1+y2)//2,"INIZIA BATTAGLIA",self.font_simboli_s,col(BG),"center")
+        if self.selezionato_indice>=0:
+            pygame.draw.rect(self.schermo,(0,0,0),pygame.Rect(x1+3,y1+3,x2-x1,y2-y1),0,4)
+            pygame.draw.rect(self.schermo,col(ACCENT),pygame.Rect(x1,y1,x2-x1,y2-y1),0,4)
+            self._txt((x1+x2)//2,(y1+y2)//2,"INIZIA",self.font_simboli_s,col(BG),"center")
         else:
-            pygame.draw.rect(self.schermo,col(BG3),  pygame.Rect(x1,y1,x2-x1,y2-y1),0,4)
-            pygame.draw.rect(self.schermo,col(BORDER),pygame.Rect(x1,y1,x2-x1,y2-y1),2,4)
-            self._txt((x1+x2)//2,(y1+y2)//2,"SCEGLI UN POKEMON",self.font_simboli_s,col(TXT2),"center")
+            pygame.draw.rect(self.schermo,col(BG3),pygame.Rect(x1,y1,x2-x1,y2-y1),0,4)
+            self._txt((x1+x2)//2,(y1+y2)//2,"SCEGLI",self.font_simboli_s,col(TXT2),"center")
 
+        if self.immagine_bigpanel is not None:
+            self.schermo.blit(self.immagine_bigpanel,(PANNELLO_L_W,BAR))
         self._griglia()
         self._scrollbar()
 
@@ -1071,49 +1047,45 @@ class Finestra:
         righe_visibili=7
         if numero_righe<=righe_visibili: return
         sb_x,sb_y,sb_w,sb_h=self._rett_sb()
-        pygame.draw.rect(self.schermo,col(BG3),  pygame.Rect(sb_x,sb_y,sb_w,sb_h))
-        pygame.draw.rect(self.schermo,col(BORDER),pygame.Rect(sb_x,sb_y,sb_w,sb_h),1)
-        pygame.draw.rect(self.schermo,col(ACCENT2),pygame.Rect(sb_x-1,sb_y-1,sb_w+2,sb_h+2),1)
+        pygame.draw.rect(self.schermo,col(BG3),pygame.Rect(sb_x,sb_y,sb_w,sb_h))
         proporzione=righe_visibili/numero_righe
         thumb_h=max(20,int(sb_h*proporzione))
-        scroll_max=numero_righe-righe_visibili
-        thumb_y=sb_y+int((sb_h-thumb_h)*(self.scroll_righe/max(1,scroll_max)))
+        thumb_y=sb_y+int((sb_h-thumb_h)*(self.scroll_righe/max(1,numero_righe-righe_visibili)))
         pygame.draw.rect(self.schermo,col(ACCENT),pygame.Rect(sb_x,thumb_y,sb_w,thumb_h))
-        for dy in range(thumb_h//4,thumb_h,thumb_h//4):
-            pygame.draw.rect(self.schermo,col(ACCENT2),pygame.Rect(sb_x+2,thumb_y+dy,sb_w-4,1))
 
     def _griglia(self):
         for riga in range(8):
-            for colonna in range(GRIGLIA_COLONNE):
-                idx=(self.scroll_righe+riga)*GRIGLIA_COLONNE+colonna
+            for col_ in range(GRIGLIA_COLONNE):
+                idx=(self.scroll_righe+riga)*GRIGLIA_COLONNE+col_
                 if idx>=len(self.lista_pokemon): break
-                px=GRIGLIA_ORIG_X+colonna*(GRIGLIA_CELLA_W+GRIGLIA_GAP)
-                py=GRIGLIA_ORIG_Y+riga   *(GRIGLIA_CELLA_H+GRIGLIA_GAP)
+                px=GRIGLIA_ORIG_X+col_*(GRIGLIA_CELLA_W+GRIGLIA_GAP)
+                py=GRIGLIA_ORIG_Y+riga*(GRIGLIA_CELLA_H+GRIGLIA_GAP)
                 if py+GRIGLIA_CELLA_H>H: break
                 self._cella_pokemon(self.lista_pokemon[idx],px,py,
                                     idx==self.hover_indice,idx==self.selezionato_indice)
 
     def _cella_pokemon(self, pokemon, x, y, hover, selezionato):
         tipo=pokemon["tipi"][0] if pokemon["tipi"] else "Normal"
-        if selezionato:
-            pygame.draw.rect(self.schermo,(0,0,0),pygame.Rect(x+3,y+3,GRIGLIA_CELLA_W,GRIGLIA_CELLA_H),2,5)
-            pygame.draw.rect(self.schermo,col("#000000"),pygame.Rect(x,y,GRIGLIA_CELLA_W,GRIGLIA_CELLA_H),2,5)
-            pygame.draw.rect(self.schermo,col("#FFFFFF"),       pygame.Rect(x,y,GRIGLIA_CELLA_W,GRIGLIA_CELLA_H),2,5)
-            cn=OK
-        elif hover:
-            pygame.draw.rect(self.schermo,(0,0,0),pygame.Rect(x+3,y+3,GRIGLIA_CELLA_W,GRIGLIA_CELLA_H),2,5)
-            pygame.draw.rect(self.schermo,col(BG3),   pygame.Rect(x,y,GRIGLIA_CELLA_W,GRIGLIA_CELLA_H),2,5)
-            pygame.draw.rect(self.schermo,col(ACCENT),pygame.Rect(x,y,GRIGLIA_CELLA_W,GRIGLIA_CELLA_H),2,5)
-            cn=ACCENT
+        # hover e selezionato hanno lo stesso stile visivo
+        if hover or selezionato:
+            if self.tema=="scuro":
+                pygame.draw.rect(self.schermo,(0,0,0),  pygame.Rect(x+3,y+3,GRIGLIA_CELLA_W,GRIGLIA_CELLA_H),2)
+                pygame.draw.rect(self.schermo,(18,29,47),pygame.Rect(x,y,GRIGLIA_CELLA_W,GRIGLIA_CELLA_H))
+                pygame.draw.rect(self.schermo,(255,255,255),pygame.Rect(x,y,GRIGLIA_CELLA_W,GRIGLIA_CELLA_H),2)
+            else:
+                pygame.draw.rect(self.schermo,(0,0,0),    pygame.Rect(x+3,y+3,GRIGLIA_CELLA_W,GRIGLIA_CELLA_H))
+                pygame.draw.rect(self.schermo,(255,255,255),pygame.Rect(x,y,GRIGLIA_CELLA_W,GRIGLIA_CELLA_H))
+                pygame.draw.rect(self.schermo,(255,255,255),pygame.Rect(x,y,GRIGLIA_CELLA_W,GRIGLIA_CELLA_H),2)
+        elif self.tema=="scuro":
+            pygame.draw.rect(self.schermo,(37,61,74),pygame.Rect(x,y,GRIGLIA_CELLA_W,GRIGLIA_CELLA_H))
         else:
-            pygame.draw.rect(self.schermo,col(BG3),   pygame.Rect(x,y,GRIGLIA_CELLA_W,GRIGLIA_CELLA_H),2,5)
-            pygame.draw.rect(self.schermo,col(BORDER),pygame.Rect(x,y,GRIGLIA_CELLA_W,GRIGLIA_CELLA_H),1,5)
-            cn=TXT
+            pygame.draw.rect(self.schermo,(192,211,215),pygame.Rect(x,y,GRIGLIA_CELLA_W,GRIGLIA_CELLA_H))
+
         self._rett(x+2,y+8,x+5,y+GRIGLIA_CELLA_H-8,sfondo=TIPO_COL.get(tipo,TXT2))
-        raggio=SPR_SEL; cxs=x+10+raggio; cys=y+GRIGLIA_CELLA_H//2
-        self._sprite_cerchio(pokemon,cxs,cys,raggio,SPR_CER_OFF_SEL)
-        tx=cxs+raggio+8; ty=y+6
-        self._txt(tx,ty,pokemon["nome"][:14],self.font_normale,col(cn))
+        cxs=x+10+SPR_SEL; cys=y+GRIGLIA_CELLA_H//2
+        self._sprite_cerchio(pokemon,cxs,cys,SPR_SEL)
+        tx=cxs+SPR_SEL+8; ty=y+6
+        self._txt(tx,ty,pokemon["nome"][:14],self.font_normale,col(TXT))
         xt=tx; yt=ty+21; xm=x+GRIGLIA_CELLA_W-6
         for t in pokemon["tipi"]:
             tw,th=self.font_piccolo.size(t); lbw=tw+8; lbh=th+4
@@ -1128,7 +1100,7 @@ class Finestra:
 
     def _pannello_stats(self, pokemon):
         cx=PANNELLO_L_W//2; cy=BAR+20+SPR_PAN
-        self._sprite_cerchio(pokemon,cx,cy,SPR_PAN,SPR_CER_OFF_PAN)
+        self._sprite_cerchio(pokemon,cx,cy,SPR_PAN)
         y=cy+SPR_PAN+12
         self._txt(cx,y,pokemon["nome"],self.font_grassetto,col(TXT),"center")
         y+=22; xb=10
@@ -1137,12 +1109,14 @@ class Finestra:
             self._rett_r(xb,y,xb+lbw,y+17,raggio=6,sfondo=TIPO_COL.get(tipo,TXT2))
             self._txt(xb+lbw//2,y+8,tipo,self.font_piccolo,col(TXT),"center")
             xb+=lbw+5
-        y+=28; self._linea(10,y,PANNELLO_L_W-10,y,BORDER); y+=8
-        lb=PANNELLO_L_W-24
+        y+=36; lb=PANNELLO_L_W-24
         for nome,valore,massimo,cb in [
-            ("HP",pokemon["stats"]["hp"],250,COL_HP),("ATK",pokemon["stats"]["attack"],200,COL_ATK),
-            ("DEF",pokemon["stats"]["defense"],250,COL_DEF),("SpA",pokemon["stats"]["sp_attack"],194,COL_SPA),
-            ("SpD",pokemon["stats"]["sp_defense"],250,COL_SPD),("VEL",pokemon["stats"]["speed"],200,COL_VEL),
+            ("HP", pokemon["stats"]["hp"],         250,COL_HP),
+            ("ATK",pokemon["stats"]["attack"],      200,COL_ATK),
+            ("DEF",pokemon["stats"]["defense"],     250,COL_DEF),
+            ("SpA",pokemon["stats"]["sp_attack"],   194,COL_SPA),
+            ("SpD",pokemon["stats"]["sp_defense"],  250,COL_SPD),
+            ("VEL",pokemon["stats"]["speed"],       200,COL_VEL),
         ]:
             self._txt(12,y+3,nome,self.font_piccolo,col(TXT2),"w")
             self._txt(PANNELLO_L_W-12,y+3,str(valore),self.font_piccolo,col(TXT),"e")
@@ -1153,22 +1127,22 @@ class Finestra:
     # -----------------------------------------------------------
 
     def _disegna_tabellone(self):
-        vuoto=lambda n:[{"a":"","b":"","vincitore":None} for _ in range(n)]
-        r16=self.bracket_dati[0] if len(self.bracket_dati)>=1 else vuoto(8)
-        rqf=self.bracket_dati[1] if len(self.bracket_dati)>=2 else vuoto(4)
-        rsf=self.bracket_dati[2] if len(self.bracket_dati)>=3 else vuoto(2)
-        rf =self.bracket_dati[3] if len(self.bracket_dati)>=4 else vuoto(1)
-        while len(r16)<8: r16.append({"a":"","b":"","vincitore":None})
-        while len(rqf)<4: rqf.append({"a":"","b":"","vincitore":None})
-        while len(rsf)<2: rsf.append({"a":"","b":"","vincitore":None})
-        while len(rf) <1: rf.append( {"a":"","b":"","vincitore":None})
+        vuoto = {"a":"","b":"","vincitore":None}
+        def round_(n, size):
+            r = list(self.bracket_dati[n]) if len(self.bracket_dati) > n else []
+            r += [dict(vuoto)] * max(0, size - len(r))
+            return r
+        r16 = round_(0, 8)
+        rqf = round_(1, 4)
+        rsf = round_(2, 2)
+        rf  = round_(3, 1)
 
         yi=BRACKET_TOP-22
         for testo,xc,c in [
-            ("ROUND OF 16",(R16_L_X1+R16_L_X2)//2,ACCENT),("QUARTI",(QF_L_X1+QF_L_X2)//2,ACCENT),
+            ("OTTAVI",(R16_L_X1+R16_L_X2)//2,ACCENT),("QUARTI",(QF_L_X1+QF_L_X2)//2,ACCENT),
             ("SEMIFINALI",(SF_L_X1+SF_L_X2)//2,ACCENT),("FINALE",W//2,GOLD),
             ("SEMIFINALI",(SF_R_X1+SF_R_X2)//2,ACCENT),("QUARTI",(QF_R_X1+QF_R_X2)//2,ACCENT),
-            ("ROUND OF 16",(R16_R_X1+R16_R_X2)//2,ACCENT),
+            ("OTTAVI",(R16_R_X1+R16_R_X2)//2,ACCENT),
         ]: self._txt(xc,yi,testo,self.font_piccolo,col(c),"n")
 
         for i in range(4):
@@ -1181,7 +1155,7 @@ class Finestra:
         for i in range(2):
             ym=BRACKET_TOP+i*QF_SLOT+(QF_SLOT-BRACKET_BOX_H)//2
             cy=ym+BRACKET_BOX_H//2
-            ya=BRACKET_TOP+(i*2+0)*R16_SLOT+R16_SLOT//2
+            ya=BRACKET_TOP+(i*2)*R16_SLOT+R16_SLOT//2
             yb_=BRACKET_TOP+(i*2+1)*R16_SLOT+R16_SLOT//2
             xrl=(R16_L_X2+QF_L_X1)//2; xrr=(R16_R_X1+QF_R_X2)//2
             self._box_match(rqf[i],  QF_L_X1,ym)
@@ -1210,20 +1184,29 @@ class Finestra:
 
         if self.mostra_continua:
             if self.messaggio_risultato:
-                self._txt(W//2,H-110,self.messaggio_risultato,self.font_grassetto,col(ACCENT),"center")
+                c_msg=TXT if self.tema=="chiaro" else ACCENT
+                self._txt(W//2,H-110,self.messaggio_risultato,self.font_grassetto,col(c_msg),"center")
             self._btn_continua()
 
     def _box_match(self, match, x, y):
         na=match.get("a","?"); nb=match.get("b","?"); vc=match.get("vincitore")
+        ng=self.nome_pokemon_giocatore
+        e_gio_box = bool(ng) and (na==ng or nb==ng)
+        c_bordo   = VIOLA_PLAYER if e_gio_box else (col(OK) if vc else col(BORDER))
+
         pygame.draw.rect(self.schermo,(0,0,0),pygame.Rect(x+3,y+3,BRACKET_BOX_W,BRACKET_BOX_H))
         pygame.draw.rect(self.schermo,col(BG2),pygame.Rect(x,y,BRACKET_BOX_W,BRACKET_BOX_H))
-        pygame.draw.rect(self.schermo,col(OK if vc else BORDER),pygame.Rect(x,y,BRACKET_BOX_W,BRACKET_BOX_H),2)
+        pygame.draw.rect(self.schermo,c_bordo, pygame.Rect(x,y,BRACKET_BOX_W,BRACKET_BOX_H),2)
+
+        def _col_nome(nome):
+            if bool(ng) and nome==ng: return VIOLA_PLAYER
+            if vc==nome: return col(OK)
+            return col(TXT2) if vc else col(TXT)
+
         meta=BRACKET_BOX_H//2
-        ca,pra=(OK,"▶ ") if vc==na else ((TXT2,"  ") if vc else (TXT,"  "))
-        self._txt(x+8,y+meta//2,pra+na[:16],self.font_simboli_s,col(ca),"w")
+        self._txt(x+8,y+meta//2,   ("▶ " if vc==na else "  ")+na[:16],self.font_simboli_s,_col_nome(na),"w")
         pygame.draw.rect(self.schermo,col(BORDER),pygame.Rect(x+3,y+meta,BRACKET_BOX_W-6,1))
-        cb,prb=(OK,"▶ ") if vc==nb else ((TXT2,"  ") if vc else (TXT,"  "))
-        self._txt(x+8,y+meta+meta//2,prb+nb[:16],self.font_simboli_s,col(cb),"w")
+        self._txt(x+8,y+meta+meta//2,("▶ " if vc==nb else "  ")+nb[:16],self.font_simboli_s,_col_nome(nb),"w")
 
     # -----------------------------------------------------------
     # SCHERMATA: BATTAGLIA
@@ -1238,19 +1221,19 @@ class Finestra:
             alt=H-LOW-BAR
             for i in range(8):
                 p=i/8
-                r_=int(0x0a+(0x14-0x0a)*p); g_=int(0x0e+(0x1c-0x0e)*p); b_=int(0x1a+(0x35-0x1a)*p)
-                pygame.draw.rect(self.schermo,(r_,g_,b_),(0,BAR+int(i*alt/8),W,int(alt/8)+1))
+                pygame.draw.rect(self.schermo,
+                    (int(0x0a+(0x14-0x0a)*p),int(0x0e+(0x1c-0x0e)*p),int(0x1a+(0x35-0x1a)*p)),
+                    (0,BAR+int(i*alt/8),W,int(alt/8)+1))
 
         self._linea(0,H-LOW,W,H-LOW,ACCENT,2)
-        self._barre_pokemon(self.pokemon_giocatore,  14,    BAR+8,300,True)
+        self._barre_pokemon(self.pokemon_giocatore,  14,   BAR+8,300,True)
         self._barre_pokemon(self.pokemon_avversario,W-314, BAR+8,300,False)
 
         sx=self.offset_shake_x; sy=self.offset_shake_y
-        # Speed lines
         for sl in self.speed_lines:
             prog=sl["eta"]/sl["durata"]
-            lx2=int(sl["x1"]+sl["dir_x"]*sl["lunghezza"]*prog*1.5)
             if prog<0.9:
+                lx2=int(sl["x1"]+sl["dir_x"]*sl["lunghezza"]*prog*1.5)
                 pygame.draw.line(self.schermo,(220,220,255),(int(sl["x1"]),int(sl["y1"])),(lx2,int(sl["y1"])),max(1,int(3*(1-prog))))
 
         cxg=GX+self.offset_x_giocatore+SPR_B//2+sx
@@ -1263,34 +1246,29 @@ class Finestra:
         if self.opacita_avversario>0:
             self._sprite_battaglia(self.pokemon_avversario,cxa,cya,self.opacita_avversario)
 
-        # Onde d'urto
         for o in self.onde_impatto:
             if o["raggio"]>0:
                 prog=o["eta"]/o["durata"]
                 if int(o["alpha"]*(1-prog))>10:
-                    cx_t=(cxg if o["chi_bersaglio"]=="giocatore" else cxa)
-                    cy_t=(cyg if o["chi_bersaglio"]=="giocatore" else cya)+int(SPR_B*0.1)
+                    cxt=(cxg if o["chi_bersaglio"]=="giocatore" else cxa)
+                    cyt=(cyg if o["chi_bersaglio"]=="giocatore" else cya)+int(SPR_B*0.1)
                     r,g,b=o["colore"]
-                    pygame.draw.circle(self.schermo,
-                        (min(255,r+int((255-r)*prog*0.5)),min(255,g+int((255-g)*prog*0.5)),min(255,b+int((255-b)*prog*0.5))),
-                        (int(cx_t),int(cy_t)),o["raggio"],max(1,int(4*(1-prog))))
+                    fade=lambda v: min(255,v+int((255-v)*prog*0.5))
+                    pygame.draw.circle(self.schermo,(fade(r),fade(g),fade(b)),
+                        (int(cxt),int(cyt)),o["raggio"],max(1,int(4*(1-prog))))
 
-        # Scia attacco speciale
         for p in self.particelle_speciali:
             prog=p["eta"]/p["durata"]; ra=max(1,int(p["raggio"]*(1-prog*0.6)))
             if prog<0.92:
                 pygame.draw.circle(self.schermo,p["colore"],(int(p["x"]),int(p["y"])),ra)
                 if ra>=3: pygame.draw.circle(self.schermo,(255,255,255),(int(p["x"]),int(p["y"])),max(1,ra//3))
 
-        # Particelle impatto
         for p in self.particelle_impatto:
             prog=p["eta"]/p["durata"]; ra=max(1,int(p["raggio"]*(1-prog)))
             r,g,b=p["colore"]
-            pygame.draw.circle(self.schermo,
-                (min(255,r+int((255-r)*prog*0.6)),min(255,g+int((255-g)*prog*0.6)),min(255,b+int((255-b)*prog*0.6))),
-                (int(p["x"]),int(p["y"])),ra)
+            fade=lambda v: min(255,v+int((255-v)*prog*0.6))
+            pygame.draw.circle(self.schermo,(fade(r),fade(g),fade(b)),(int(p["x"]),int(p["y"])),ra)
 
-        # Bolle cura
         for b in self.bolle_cura:
             if b["eta"]>0 and b["eta"]/b["durata"]<0.95:
                 r,g,bv=b["colore"]
@@ -1298,15 +1276,13 @@ class Finestra:
                 pygame.draw.circle(self.schermo,(255,255,255),
                     (int(b["x"]-b["raggio"]*0.3),int(b["y"]-b["raggio"]*0.3)),max(1,b["raggio"]//4))
 
-        # Zona bassa
         lw_log=int(W*0.72)
-        self._rett(0,H-LOW,lw_log,H,sfondo=BG2); self._rett(lw_log,H-LOW,W,H,sfondo=BG)
-        self._linea(lw_log,H-LOW,lw_log,H,BORDER)
-        self._rett_r(8,H-LOW+8,lw_log-8,H-8,raggio=10,sfondo=BG3,bordo=BORDER)
+        self._rett(0,H-LOW,lw_log,H,sfondo=BG2)
+        self._rett(lw_log,H-LOW,W,H,sfondo=BG)
+        self._rett_r(8,H-LOW+8,lw_log-8,H-8,raggio=10,sfondo=BG,bordo=BORDER)
 
-        messaggi=self.log_battaglia[-LOG_N:]
         y_log=H-LOW+14; alt_r=(H-16-y_log)//LOG_N
-        for i,(testo,cm) in enumerate(messaggi):
+        for i,(testo,cm) in enumerate(self.log_battaglia[-LOG_N:]):
             self._txt(16,y_log+i*alt_r,testo[:88],self.font_log,col(cm) if cm else col(TXT))
 
         nomi_btn=["ATTACCO","ATT. SPECIALE","POZIONE","POZ. SPECIALE"]
@@ -1317,10 +1293,10 @@ class Finestra:
         dis=[False,False,self.pozioni_norm<=0,self.pozioni_spec<=0]
         for i,(x1,y1,x2,y2) in enumerate(self._rett_mosse()):
             cm=col_btn[i]; eh=(self.hover_mossa==i and self.e_turno_mio and not dis[i])
-            if dis[i]:             csf,cbr,ct,cd=BG3,BORDER,TXT2,TXT2
-            elif eh:               csf,cbr,ct,cd=cm,cm,BG,BG
-            elif self.e_turno_mio: csf,cbr,ct,cd=BG2,cm,cm,TXT2
-            else:                  csf,cbr,ct,cd=BG3,BORDER,TXT2,TXT2
+            if   dis[i]:          csf,cbr,ct,cd = BG3,BORDER,TXT2,TXT2
+            elif eh:              csf,cbr,ct,cd = cm,cm,BG,BG
+            elif self.e_turno_mio:csf,cbr,ct,cd = BG2,cm,cm,TXT2
+            else:                 csf,cbr,ct,cd = BG3,BORDER,TXT2,TXT2
             self._rett_r(x1,y1,x2,y2,raggio=8,sfondo=csf,bordo=cbr,sp=2)
             cy_=(y1+y2)//2
             self._txt(x1+10,cy_-8,nomi_btn[i],self.font_normale,col(ct),"w")
@@ -1339,12 +1315,11 @@ class Finestra:
         if self.mostra_continua and self.animazione_ko is None:
             self._overlay()
             if self.messaggio_risultato:
-                self._txt(W//2,H//2-60,self.messaggio_risultato,self.font_grassetto,col(ACCENT),"center")
+                self._txt(W//2,H//2-60,self.messaggio_risultato,self.font_grassetto,(255,255,255),"center")
             self._btn_continua()
 
     def _barre_pokemon(self, pokemon, x, y0, lw, e_giocatore):
-        c_nome=ACCENT if e_giocatore else ACCENT2
-        self._txt(x,y0,pokemon["nome"],self.font_grassetto,col(c_nome))
+        self._txt(x,y0,pokemon["nome"],self.font_grassetto,col(ACCENT if e_giocatore else ACCENT2))
         y=y0+36
         for nome,valore,massimo,cb in [
             ("HP", pokemon["hp_attuale"],       pokemon["stats"]["hp"],         COL_HP),
@@ -1370,10 +1345,8 @@ class Finestra:
     def _disegna_campione(self):
         for i in range(12):
             a=i*30*math.pi/180
-            self._linea(W//2,H//2-60,W//2+int(math.cos(a)*500),H//2-60+int(math.sin(a)*500),"#302800")
+            self._linea(W//2,H//2-60,W//2+int(math.cos(a)*500),H//2-60+int(math.sin(a)*500),"#FFD500")
         self._txt(W//2,H//2-100,"CAMPIONE DEL TORNEO",self.font_simboli_xl,col(GOLD),"center")
         self._txt(W//2,H//2-50,self.messaggio_risultato,self.font_titolo,col(ACCENT),"center")
         if self.mostra_continua:
-            x1,y1,x2,y2=self._rett_cont()
-            self._px(x1,y1,x2,y2,ACCENT2,ACCENT)
-            self._txt((x1+x2)//2,(y1+y2)//2,"[ GIOCA ANCORA ]",self.font_grassetto,col(TXT),"center")
+            self._btn_continua("[ GIOCA ANCORA ]")
