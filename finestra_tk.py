@@ -158,6 +158,7 @@ class Finestra:
         self.messaggio_risultato = ""
         self.mostra_continua     = False
         self.log_battaglia       = []
+        self.pokemon_campione    = None
 
         # Animazioni battaglia
         self.offset_x_giocatore    = 0
@@ -653,6 +654,7 @@ class Finestra:
 
             elif tipo == "campione":
                 self.messaggio_risultato = m["messaggio"]
+                self.pokemon_campione    = m.get("pokemon", None)
                 self.schermata_corrente  = "campione"
                 self.mostra_continua     = True
                 self.wallpaper_corrente  = None
@@ -1343,10 +1345,59 @@ class Finestra:
     # -----------------------------------------------------------
 
     def _disegna_campione(self):
-        for i in range(12):
-            a=i*30*math.pi/180
-            self._linea(W//2,H//2-60,W//2+int(math.cos(a)*500),H//2-60+int(math.sin(a)*500),"#FFD500")
-        self._txt(W//2,H//2-100,"CAMPIONE DEL TORNEO",self.font_simboli_xl,col(GOLD),"center")
-        self._txt(W//2,H//2-50,self.messaggio_risultato,self.font_titolo,col(ACCENT),"center")
+        pk = self.pokemon_campione
+
+        # Sfondo gradiente scuro
+        for iy in range(H):
+            p = iy / H
+            r = int(10  + (30  - 10)  * p)
+            g = int(8   + (18  - 8)   * p)
+            b = int(20  + (50  - 20)  * p)
+            pygame.draw.line(self.schermo, (r, g, b), (0, iy), (W, iy))
+
+        # Raggi dorati dal centro
+        cx_ray = W // 2
+        cy_ray = H // 2 - 30
+        n_raggi = 24
+        for i in range(n_raggi):
+            a = i * (2 * math.pi / n_raggi)
+            colore_raggio = (255, 215, 0) if i % 2 == 0 else (255, 180, 0)
+            pygame.draw.line(self.schermo, colore_raggio,
+                             (cx_ray, cy_ray),
+                             (cx_ray + int(math.cos(a) * 700),
+                              cy_ray + int(math.sin(a) * 700)), 1)
+
+        # Cerchio dorato sotto lo sprite
+        pygame.draw.circle(self.schermo, (50, 40, 0),    (cx_ray, cy_ray), 202)
+        pygame.draw.circle(self.schermo, (255, 215, 0),  (cx_ray, cy_ray), 200, 4)
+        pygame.draw.circle(self.schermo, (255, 240, 100),(cx_ray, cy_ray), 185, 1)
+
+        # Sprite del Pokemon campione
+        SPR_C = 340
+        if pk is not None:
+            img = self._carica_immagine(pk["nome"], SPR_C)
+            if img:
+                self.schermo.blit(img, (cx_ray - SPR_C // 2, cy_ray - SPR_C // 2 - 60))
+            else:
+                tipo0 = pk["tipi"][0] if pk["tipi"] else "Normal"
+                self._txt(cx_ray, cy_ray - 20,
+                          pk["nome"][0].upper(),
+                          self.font_grande, col(TIPO_COL.get(tipo0, TXT2)), "center")
+
+        # Titolo CAMPIONE DEL TORNEO
+        titolo_y = BAR + 28
+        self._txt(W // 2 + 3, titolo_y + 3, "CAMPIONE DEL TORNEO",
+                  self.font_simboli_xl, (0, 0, 0), "n")
+        self._txt(W // 2, titolo_y, "CAMPIONE DEL TORNEO",
+                  self.font_simboli_xl, col(GOLD), "n")
+
+        # Nome del Pokemon — dentro il cerchio dorato, in basso
+        if pk is not None:
+            nome_y = cy_ray + 105
+            self._txt(W // 2 + 2, nome_y + 2, pk["nome"],
+                      self.font_grande, (0, 0, 0), "center")
+            self._txt(W // 2, nome_y, pk["nome"],
+                      self.font_grande, (255, 255, 255), "center")
+
         if self.mostra_continua:
             self._btn_continua("[ GIOCA ANCORA ]")

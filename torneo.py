@@ -175,7 +175,7 @@ def esegui_torneo(giocatore, partecipanti, tabella_tipi, difficolta, finestra=No
         pool = vincitori
 
     # Il giocatore ha vinto il torneo
-    campione = pool[0]
-    invia(finestra, {"tipo": "campione", "messaggio": campione["nome"]})
+    campione = vincitore
+    invia(finestra, {"tipo": "campione", "messaggio": campione["nome"], "pokemon": campione})
     aspetta_continua(finestra)
     return True
