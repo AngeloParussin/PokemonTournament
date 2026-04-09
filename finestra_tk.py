@@ -196,6 +196,8 @@ class Finestra:
     def avvia(self, thread_logica):
         pygame.init()
         pygame.display.set_caption("Pokemon Tournament")
+        icona = pygame.image.load("PokemonGame/style/Icon.png")
+        pygame.display.set_icon(icona)
         self.schermo = pygame.display.set_mode((W, H), pygame.SRCALPHA | pygame.FULLSCREEN)
         self._crea_font()
         self._applica_tema("scuro")
