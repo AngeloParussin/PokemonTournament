@@ -1330,7 +1330,7 @@ class Finestra:
             ("DEF",pokemon["difesa_attuale"],    pokemon["stats"]["defense"],    COL_DEF),
             ("SpD",pokemon["sp_difesa_attuale"], pokemon["stats"]["sp_defense"], COL_SPD),
         ]:
-            self._txt(x,y+1,nome,self.font_piccolo,col(TXT2))
+            self._txt(x,y-5,nome,self.font_piccolo,col(TXT2))
             xb=x+34; lwb=lw-80
             r_=pygame.Rect(xb,y,lwb,10)
             pygame.draw.rect(self.schermo,col(self.barra_bg_colore),r_,0,border_radius=5)
@@ -1339,7 +1339,7 @@ class Finestra:
                 pieni=max(0,int(lwb*min(valore,massimo)/massimo))
                 if pieni>0:
                     pygame.draw.rect(self.schermo,col(cb),pygame.Rect(xb,y,pieni,10),0,border_radius=5)
-            self._txt(x+lw,y+1,f"{int(valore)}/{massimo}",self.font_piccolo,col(TXT),"ne")
+            self._txt(x+10+lw,y-5,f"{int(valore)}/{massimo}",self.font_piccolo,col(TXT),"ne")
             y+=16
 
     # -----------------------------------------------------------
